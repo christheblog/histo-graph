@@ -2,10 +2,10 @@ use crate::core::graph::*;
 
 /// Diff between 2 graphs
 pub struct StructureDiff {
-    extra_vertices: Vec<VertexId>,
-    missing_vertices: Vec<VertexId>,
-    extra_edges: Vec<Edge>,
-    missing_edges: Vec<Edge>,
+    extra_vertices: Vec<VertexId>,   // in graph 1, not in graph 2
+    missing_vertices: Vec<VertexId>, // missing in graph 2
+    extra_edges: Vec<Edge>,          // in graph 1, not in graph 2
+    missing_edges: Vec<Edge>,        // missing in graph 2
 }
 
 // Compute the diff between 2 graphs, from the point of view of the first one
@@ -30,7 +30,7 @@ impl StructureDiff {
         }
     }
 
-    /// Compute a patch between the 2 graphs
+    /// Compute a patch to transform graph 1 into graph 2
     pub fn as_commands(&self) -> Vec<GraphCommand> {
         use GraphCommand::*;
         let mut res: Vec<GraphCommand> = Vec::new();

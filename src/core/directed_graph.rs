@@ -1,7 +1,7 @@
 use crate::core::graph::*;
 use std::collections::HashMap;
 
-trait Directed {
+pub trait Directed {
     /// Returns an iterator on the outbound edges
     fn outbound_edges(&self, vertex_id: VertexId) -> Vec<Edge>;
     /// Returns an iterator on the inbound edges
@@ -10,13 +10,26 @@ trait Directed {
     fn degree_out(&self, vertex_id: VertexId) -> usize;
     /// Count the directed edges arriving to the given vertex
     fn degree_in(&self, vertex_id: VertexId) -> usize;
+    /// Returns parent vertices
+    fn parents(&self, vertex_id: VertexId) -> Vec<VertexId> {
+        self.inbound_edges(vertex_id)
+            .iter()
+            .map(|Edge(v1, _)| *v1)
+            .collect()
+    }
+    /// Returns children vertices
+    fn children(&self, vertex_id: VertexId) -> Vec<VertexId> {
+        self.outbound_edges(vertex_id)
+            .iter()
+            .map(|Edge(_, v2)| *v2)
+            .collect()
+    }
 }
 
 /// Directed graph structure
 /// It doesn't contain any information concerning the vertex or the edge attributes
 pub struct DirectedGraph {
-    // Each edge is indexed for by of both its vertices
-    // => 1 edge appears twice in the map
+    // Each edge is indexed for by of both its vertices => 1 edge appears twice in the map
     edge_map: HashMap<VertexId, Vec<Edge>>,
 }
 

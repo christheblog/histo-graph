@@ -12,6 +12,7 @@ pub enum HashList {
 }
 
 impl HashList {
+    
     /// creates an empty list
     pub fn empty() -> Rc<HashList> {
         Rc::new(HashList::Nil)
@@ -22,6 +23,13 @@ impl HashList {
         Rc::new(HashList::Node {
             hash: hash,
             tail: Rc::new(HashList::Nil),
+        })
+    }
+
+    pub fn cons(hash: NodeHash, list: Rc<HashList>) -> Rc<HashList> {
+        Rc::new(HashList::Node {
+            hash: hash,
+            tail: list.clone(),
         })
     }
 
@@ -40,6 +48,13 @@ impl HashList {
     }
 
     // List functions
+
+    pub fn is_empty(&self) -> bool {
+        match self {
+            HashList::Nil => true,
+            _ => false,
+        }
+    }
 
     pub fn head(&self) -> NodeHash {
         match self.head_option() {
@@ -66,13 +81,6 @@ impl HashList {
         match self {
             HashList::Node { tail: xs, .. } => Some(xs.clone()),
             HashList::Nil => None,
-        }
-    }
-
-    pub fn prepend(self, hash: NodeHash) -> HashList {
-        HashList::Node {
-            hash: hash,
-            tail: Rc::new(self),
         }
     }
 
