@@ -1,16 +1,12 @@
-use crate::core::graph::*;
-use crate::core::hashlist::*;
-use crate::core::history::Ref::*;
+use crate::core::graph::graph::*;
+use crate::core::history::hashlist::*;
+use crate::core::history::history::Ref::*;
+use core::fmt::Debug;
+use core::hash::Hash;
 use std::collections::HashMap;
 use std::rc::Rc;
 
 type Hashs = Rc<HashList>;
-
-pub struct Repository {
-    current: Ref,
-    refs: Vec<Ref>,
-    commits: HashMap<NodeHash, Commit>,
-}
 
 #[derive(PartialEq, Eq, Clone, Hash, Debug)]
 pub enum Ref {
@@ -25,11 +21,35 @@ pub struct Author(pub String);
 pub struct Comment(pub String);
 
 #[derive(PartialEq, Eq, Clone, Hash, Debug)]
-pub struct Commit {
+pub struct Commit<Item>
+where
+    Item: PartialEq + Eq + Clone + Hash + Debug,
+{
     author: Author,
     comment: Comment,
     hash: NodeHash,
-    commands: Vec<GraphCommand>,
+    item: Item,
+}
+
+// Trait for a Hasher, in charge of hashing an Item for a repository
+trait Hasher<Item>
+where
+    Item: PartialEq + Eq + Clone + Hash + Debug,
+{
+    fn hash(item: &Item, previous: Option<NodeHash>) -> NodeHash;
+}
+
+/// Git-like Repository for an item
+/// FIXME: it should be a trait, with an in-memory, and persistent storage implementations for instance
+pub struct Repository<Item>
+where
+    Item: PartialEq + Eq + Clone + Hash + Debug,
+{
+    current: Ref,
+    // FIXME: we need the hasher to be stored
+    // hasher: &Hasher<Item>
+    refs: Vec<Ref>,
+    commits: HashMap<NodeHash, Commit<Item>>,
 }
 
 impl Ref {
@@ -59,9 +79,15 @@ impl Ref {
     }
 }
 
-impl Repository {
+impl<Item> Repository<Item>
+where
+    Item: PartialEq + Eq + Clone + Hash + Debug,
+{
     /// Creates a new Repository
-    pub fn new() -> Repository {
+    pub fn new<I>() -> Repository<I>
+    where
+        I: PartialEq + Eq + Clone + Hash + Debug,
+    {
         let master = Branch(HashList::empty(), "master".to_string());
         Repository {
             current: master.clone(),
@@ -71,26 +97,11 @@ impl Repository {
     }
 
     /// Creates and add a new commit to the current branch
-    pub fn commit(
-        &mut self,
-        command: GraphCommand,
-        author: Author,
-        comment: Comment,
-    ) -> Result<Ref, String> {
-        Repository::commit_multiple(self, vec![command], author, comment)
-    }
-
-    /// Creates and add a new commit to the current branch
-    pub fn commit_multiple(
-        &mut self,
-        commands: Vec<GraphCommand>,
-        author: Author,
-        comment: Comment,
-    ) -> Result<Ref, String> {
+    pub fn commit(&mut self, item: Item, author: Author, comment: Comment) -> Result<Ref, String> {
         if self.current.is_read_only() {
             Err(format!("Cannot modify Reference {}", self.current.name()))
         } else {
-            let commit = self.create_commit(commands, author, comment);
+            let commit = self.create_commit(item, author, comment);
             let new_head = HashList::cons(commit.hash, self.current.hashs());
             // Updating repo
             self.commits.insert(commit.hash, commit);
@@ -99,19 +110,14 @@ impl Repository {
         }
     }
 
-    fn create_commit(
-        &self,
-        commands: Vec<GraphCommand>,
-        author: Author,
-        comment: Comment,
-    ) -> Commit {
+    fn create_commit(&self, item: Item, author: Author, comment: Comment) -> Commit<Item> {
         let last_hash = self.current.hashs().head_option();
-        let commit_hash = Repository::compute_hash(&commands, last_hash);
+        let commit_hash = Repository::compute_hash(&item, last_hash);
         Commit {
             author: author,
             comment: comment,
             hash: commit_hash,
-            commands: commands,
+            item: item,
         }
     }
 
@@ -131,36 +137,37 @@ impl Repository {
 
     // Checkout
 
-    pub fn checkout_tag(&mut self, name: String) -> Ref {
+    pub fn checkout_tag(&mut self, _name: String) -> Ref {
         unimplemented!()
     }
 
-    pub fn checkout_branch(&mut self, name: String) -> Ref {
+    pub fn checkout_branch(&mut self, _name: String) -> Ref {
         unimplemented!()
     }
 
-    pub fn checkout_hash(&mut self, hash: NodeHash) -> Ref {
+    pub fn checkout_hash(&mut self, _hash: NodeHash) -> Ref {
         unimplemented!()
     }
 
     // Reset
 
-    pub fn reset_soft(&mut self, hash: NodeHash) -> (Ref, Vec<GraphCommand>) {
+    pub fn reset_soft(&mut self, _hash: NodeHash) -> (Ref, Vec<GraphCommand>) {
         unimplemented!()
     }
 
-    pub fn reset_hard(&mut self, hash: NodeHash) -> Ref {
+    pub fn reset_hard(&mut self, _hash: NodeHash) -> Ref {
         unimplemented!()
     }
 
     // Rebasing
 
-    pub fn rebase(&mut self, hash: NodeHash, onto: NodeHash) -> Ref {
+    pub fn rebase(&mut self, _hash: NodeHash, _onto: NodeHash) -> Ref {
         unimplemented!()
     }
 
     /// Compute a hash for the given command, inclusing the previous hash
-    fn compute_hash(_command: &Vec<GraphCommand>, _last_hash: Option<NodeHash>) -> NodeHash {
+    fn compute_hash(_command: &Item, _last_hash: Option<NodeHash>) -> NodeHash {
+        // FIXME this call should be replaced with a call to the hasher
         unimplemented!()
     }
 }

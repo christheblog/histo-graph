@@ -1,4 +1,4 @@
-use crate::core::graph::*;
+use crate::core::graph::graph::*;
 
 /// Diff between 2 graphs
 pub struct StructureDiff {
@@ -9,7 +9,7 @@ pub struct StructureDiff {
 }
 
 // Compute the diff between 2 graphs, from the point of view of the first one
-pub fn diff<G1, G2>(g1: G1, g2: G2) -> StructureDiff
+pub fn diff<G1, G2>(_g1: G1, _g2: G2) -> StructureDiff
 where
     G1: Graph,
     G2: Graph,

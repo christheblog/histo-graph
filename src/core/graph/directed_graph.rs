@@ -1,4 +1,4 @@
-use crate::core::graph::*;
+use crate::core::graph::graph::*;
 use std::collections::HashMap;
 
 pub trait Directed {

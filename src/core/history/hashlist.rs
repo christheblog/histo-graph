@@ -12,7 +12,6 @@ pub enum HashList {
 }
 
 impl HashList {
-    
     /// creates an empty list
     pub fn empty() -> Rc<HashList> {
         Rc::new(HashList::Nil)
@@ -44,7 +43,7 @@ impl HashList {
 
     /// Rebasing a list onto another one.
     pub fn rebase(list: Rc<HashList>, onto: Rc<HashList>) -> Option<Rc<HashList>> {
-        HashList::first_common(list.clone(), onto.clone()).map(|node| unimplemented!())
+        HashList::first_common(list.clone(), onto.clone()).map(|_node| unimplemented!())
     }
 
     // List functions

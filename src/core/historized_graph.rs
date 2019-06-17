@@ -1,9 +1,9 @@
-use crate::core::directed_graph::*;
-use crate::core::graph::*;
-use crate::core::history::*;
+use crate::core::graph::directed_graph::*;
+use crate::graph::*;
+use crate::history::history::*;
 
 pub struct HistorizedGraph {
-    repository: Repository,
+    repository: Repository<Vec<Commands>>,
     graph: DirectedGraph,
 }
 
