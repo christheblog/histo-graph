@@ -1,31 +1,6 @@
 use crate::core::graph::graph::*;
 use std::collections::HashMap;
 
-pub trait Directed {
-    /// Returns an iterator on the outbound edges
-    fn outbound_edges(&self, vertex_id: VertexId) -> Vec<Edge>;
-    /// Returns an iterator on the inbound edges
-    fn inbound_edges(&self, vertex_id: VertexId) -> Vec<Edge>;
-    /// Count the directed edges going-out of the given vertex
-    fn degree_out(&self, vertex_id: VertexId) -> usize;
-    /// Count the directed edges arriving to the given vertex
-    fn degree_in(&self, vertex_id: VertexId) -> usize;
-    /// Returns parent vertices
-    fn parents(&self, vertex_id: VertexId) -> Vec<VertexId> {
-        self.inbound_edges(vertex_id)
-            .iter()
-            .map(|Edge(v1, _)| *v1)
-            .collect()
-    }
-    /// Returns children vertices
-    fn children(&self, vertex_id: VertexId) -> Vec<VertexId> {
-        self.outbound_edges(vertex_id)
-            .iter()
-            .map(|Edge(_, v2)| *v2)
-            .collect()
-    }
-}
-
 /// Directed graph structure
 /// It doesn't contain any information concerning the vertex or the edge attributes
 pub struct DirectedGraph {
@@ -33,16 +8,17 @@ pub struct DirectedGraph {
     edge_map: HashMap<VertexId, Vec<Edge>>,
 }
 
-impl Graph for DirectedGraph {
-    fn is_empty(&self) -> bool {
+impl DirectedGraph {
+
+    pub fn is_empty(&self) -> bool {
         self.vertex_count() == 0
     }
 
-    fn vertex_count(&self) -> usize {
+    pub fn vertex_count(&self) -> usize {
         self.edge_map.len()
     }
 
-    fn edge_count(&self) -> usize {
+    pub fn edge_count(&self) -> usize {
         let mut count: usize = 0;
         for (_, edges) in &self.edge_map {
             // each edge is saved twice => the count should be a multiple of 2, and divided by 2
@@ -51,15 +27,16 @@ impl Graph for DirectedGraph {
         count
     }
 
-    fn contains_vertex(&self, vertex_id: VertexId) -> bool {
+    pub fn contains_vertex(&self, vertex_id: VertexId) -> bool {
         self.edge_map.contains_key(&vertex_id)
     }
 
-    fn vertices(&self) -> Vec<VertexId> {
-        self.edge_map.keys().map(|k| *k).collect()
+    pub fn vertices(&self) -> std::vec::IntoIter<VertexId> {
+        let v: Vec<VertexId> = self.edge_map.keys().map(|k| *k).collect();
+        v.into_iter()
     }
 
-    fn contains_edge(&self, edge: Edge) -> bool {
+    pub fn contains_edge(&self, edge: Edge) -> bool {
         let Edge(v1, v2) = edge;
         if self.contains_vertex(v1) && self.contains_vertex(v2) {
             // We need to look-up only for one of the vertices
@@ -74,13 +51,12 @@ impl Graph for DirectedGraph {
         }
     }
 
-    fn edges(&self) -> Vec<Edge> {
-        self.edge_map.values().flatten().map(|k| *k).collect()
+    pub fn edges(&self) -> std::vec::IntoIter<Edge> {
+        let v: Vec<Edge> = self.edge_map.values().flatten().map(|k| *k).collect();
+        v.into_iter()
     }
-}
 
-impl Directed for DirectedGraph {
-    fn outbound_edges(&self, vertex_id: VertexId) -> Vec<Edge> {
+    pub fn outbound_edges(&self, vertex_id: VertexId) -> Vec<Edge> {
         self.edge_map
             .get(&vertex_id)
             .map(|edges| {
@@ -93,7 +69,7 @@ impl Directed for DirectedGraph {
             .unwrap_or_else(|| vec![])
     }
 
-    fn inbound_edges(&self, vertex_id: VertexId) -> Vec<Edge> {
+    pub fn inbound_edges(&self, vertex_id: VertexId) -> Vec<Edge> {
         self.edge_map
             .get(&vertex_id)
             .map(|edges| {
@@ -106,17 +82,15 @@ impl Directed for DirectedGraph {
             .unwrap_or_else(|| vec![])
     }
 
-    fn degree_out(&self, vertex_id: VertexId) -> usize {
+    pub fn degree_out(&self, vertex_id: VertexId) -> usize {
         self.outbound_edges(vertex_id).len()
     }
 
-    fn degree_in(&self, vertex_id: VertexId) -> usize {
+    pub fn degree_in(&self, vertex_id: VertexId) -> usize {
         self.inbound_edges(vertex_id).len()
     }
-}
 
-impl MutableGraph for DirectedGraph {
-    fn add_vertex(&mut self, vertex_id: VertexId) -> bool {
+    pub fn add_vertex(&mut self, vertex_id: VertexId) -> bool {
         let contains_vertex = self.edge_map.contains_key(&vertex_id);
         if !contains_vertex {
             self.edge_map.insert(vertex_id, Vec::new());
@@ -124,7 +98,7 @@ impl MutableGraph for DirectedGraph {
         contains_vertex
     }
 
-    fn remove_vertex(&mut self, vertex_id: VertexId) -> bool {
+    pub fn remove_vertex(&mut self, vertex_id: VertexId) -> bool {
         // We need to remove all edges containing the vertex
         if let Some((_, edges)) = self.edge_map.remove_entry(&vertex_id) {
             for edge in edges {
@@ -142,7 +116,7 @@ impl MutableGraph for DirectedGraph {
         }
     }
 
-    fn add_edge(&mut self, edge: Edge) -> bool {
+    pub fn add_edge(&mut self, edge: Edge) -> bool {
         if self.contains_edge(edge) {
             false
         } else {
@@ -155,7 +129,7 @@ impl MutableGraph for DirectedGraph {
         }
     }
 
-    fn remove_edge(&mut self, edge: Edge) -> bool {
+    pub fn remove_edge(&mut self, edge: Edge) -> bool {
         let Edge(v1, v2) = edge;
         let mut found = false;
         if let Some(found_v1) = self.edge_map.get_mut(&v1) {

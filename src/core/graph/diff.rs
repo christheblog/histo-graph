@@ -1,4 +1,6 @@
 use crate::core::graph::graph::*;
+use crate::core::graph::directed_graph::DirectedGraph;
+use crate::core::graph::command::GraphCommand;
 
 /// Diff between 2 graphs
 pub struct StructureDiff {
@@ -9,11 +11,7 @@ pub struct StructureDiff {
 }
 
 // Compute the diff between 2 graphs, from the point of view of the first one
-pub fn diff<G1, G2>(_g1: G1, _g2: G2) -> StructureDiff
-where
-    G1: Graph,
-    G2: Graph,
-{
+pub fn diff(_g1: DirectedGraph, _g2: DirectedGraph) -> StructureDiff {
     unimplemented!()
 }
 
