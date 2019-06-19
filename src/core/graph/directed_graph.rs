@@ -1,8 +1,8 @@
 use crate::core::graph::graph::*;
 use std::collections::HashMap;
 
-/// Directed graph structure
-/// It doesn't contain any information concerning the vertex or the edge attributes
+/// A directed graph structure that doesn't contain any information concerning the vertex or the
+/// edge attributes
 pub struct DirectedGraph {
     // Each edge is indexed for by of both its vertices => 1 edge appears twice in the map
     edge_map: HashMap<VertexId, Vec<Edge>>,
@@ -10,10 +10,49 @@ pub struct DirectedGraph {
 
 impl DirectedGraph {
 
+    /// Creates an empty `DirectedGraph`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// let mut graph = DirectedGraph::new();
+    /// ```
+    pub fn new() -> DirectedGraph {
+        DirectedGraph {
+            edge_map: HashMap::new(),
+        }
+    }
+
+    /// Returns `true` if the graph contains no vertices nor edges.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::VertexId;
+    /// let mut g = DirectedGraph::new();
+    /// assert!(g.is_empty());
+    /// g.add_vertex(VertexId(1));
+    /// assert!(!g.is_empty());
+    /// ```
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.vertex_count() == 0
     }
 
+    /// Returns the number of vertices in the graph
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::VertexId;
+    /// let mut g = DirectedGraph::new();
+    /// assert_eq!(g.vertex_count(), 0);
+    /// g.add_vertex(VertexId(1));
+    /// assert_eq!(g.vertex_count(), 1);
+    /// ```
     pub fn vertex_count(&self) -> usize {
         self.edge_map.len()
     }
