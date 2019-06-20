@@ -1,10 +1,12 @@
-use crate::core::graph::graph::*;
-use crate::core::history::hashlist::*;
-use crate::core::history::history::Ref::*;
-use core::fmt::Debug;
-use core::hash::Hash;
 use std::collections::HashMap;
 use std::rc::Rc;
+
+use core::fmt::Debug;
+use core::hash::Hash;
+
+use crate::core::graph::command::GraphCommand;
+use crate::core::history::hashlist::*;
+use crate::core::history::history::Ref::*;
 
 type Hashs = Rc<HashList>;
 

@@ -1,65 +1,138 @@
 use crate::core::graph::graph::*;
 use std::collections::HashMap;
 
-pub trait Directed {
-    /// Returns an iterator on the outbound edges
-    fn outbound_edges(&self, vertex_id: VertexId) -> Vec<Edge>;
-    /// Returns an iterator on the inbound edges
-    fn inbound_edges(&self, vertex_id: VertexId) -> Vec<Edge>;
-    /// Count the directed edges going-out of the given vertex
-    fn degree_out(&self, vertex_id: VertexId) -> usize;
-    /// Count the directed edges arriving to the given vertex
-    fn degree_in(&self, vertex_id: VertexId) -> usize;
-    /// Returns parent vertices
-    fn parents(&self, vertex_id: VertexId) -> Vec<VertexId> {
-        self.inbound_edges(vertex_id)
-            .iter()
-            .map(|Edge(v1, _)| *v1)
-            .collect()
-    }
-    /// Returns children vertices
-    fn children(&self, vertex_id: VertexId) -> Vec<VertexId> {
-        self.outbound_edges(vertex_id)
-            .iter()
-            .map(|Edge(_, v2)| *v2)
-            .collect()
-    }
-}
-
-/// Directed graph structure
-/// It doesn't contain any information concerning the vertex or the edge attributes
+/// A directed graph structure that doesn't contain any information concerning the vertex or the
+/// edge attributes
 pub struct DirectedGraph {
     // Each edge is indexed for by of both its vertices => 1 edge appears twice in the map
     edge_map: HashMap<VertexId, Vec<Edge>>,
 }
 
-impl Graph for DirectedGraph {
-    fn is_empty(&self) -> bool {
+impl DirectedGraph {
+
+    /// Creates an empty `DirectedGraph`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    ///
+    /// let mut graph = DirectedGraph::new();
+    /// ```
+    pub fn new() -> DirectedGraph {
+        DirectedGraph {
+            edge_map: HashMap::new(),
+        }
+    }
+
+    /// Returns `true` if the graph contains no vertices nor edges.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::VertexId;
+    ///
+    /// let mut g = DirectedGraph::new();
+    /// assert!(g.is_empty());
+    /// g.add_vertex(VertexId(1));
+    /// assert!(!g.is_empty());
+    /// ```
+    #[inline]
+    pub fn is_empty(&self) -> bool {
         self.vertex_count() == 0
     }
 
-    fn vertex_count(&self) -> usize {
+    /// Returns the number of vertices in the graph
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::VertexId;
+    ///
+    /// let mut g = DirectedGraph::new();
+    /// assert_eq!(g.vertex_count(), 0);
+    /// g.add_vertex(VertexId(1));
+    /// assert_eq!(g.vertex_count(), 1);
+    /// ```
+    pub fn vertex_count(&self) -> usize {
         self.edge_map.len()
     }
 
-    fn edge_count(&self) -> usize {
+    /// Returns the number of edges in the graph
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    ///
+    /// let mut g = DirectedGraph::new();
+    /// assert_eq!(g.edge_count(), 0);
+    /// g.add_edge(Edge(VertexId(1), VertexId(2)));
+    /// assert_eq!(g.edge_count(), 1);
+    /// ```
+    pub fn edge_count(&self) -> usize {
         let mut count: usize = 0;
         for (_, edges) in &self.edge_map {
-            // each edge is saved twice => the count should be a multiple of 2, and divided by 2
-            count += edges.len() / 2
+            count += edges.len()
         }
-        count
+        // each edge is saved twice => the count should be a multiple of 2, and divided by 2
+        count / 2
     }
 
-    fn contains_vertex(&self, vertex_id: VertexId) -> bool {
+    /// Returns true if the graph contains the `vertex_id`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::VertexId;
+    ///
+    /// let mut g = DirectedGraph::new();
+    /// assert!(!g.contains_vertex(VertexId(1)));
+    /// g.add_vertex(VertexId(1));
+    /// assert!(g.contains_vertex(VertexId(1)));
+    /// ```
+    pub fn contains_vertex(&self, vertex_id: VertexId) -> bool {
         self.edge_map.contains_key(&vertex_id)
     }
 
-    fn vertices(&self) -> Vec<VertexId> {
-        self.edge_map.keys().map(|k| *k).collect()
+    /// An iterator visiting all vertices of the graph in arbitrary order.
+    /// The iterator element type is `&VertexId`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    ///
+    /// let mut g = DirectedGraph::new();
+    /// g.add_edge(Edge(VertexId(1), VertexId(2)));
+    ///
+    /// for &v in g.vertices() {
+    ///     println!("{:?}", v);
+    /// }
+    /// ```
+    pub fn vertices(&self) -> impl Iterator<Item=&VertexId> {
+        self.edge_map.keys()
     }
 
-    fn contains_edge(&self, edge: Edge) -> bool {
+    /// Returns true if the graph contains the `edge`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    ///
+    /// let mut g = DirectedGraph::new();
+    /// assert!(!g.contains_edge(Edge(VertexId(1), VertexId(2))));
+    /// g.add_edge(Edge(VertexId(1), VertexId(2)));
+    /// assert!(g.contains_edge(Edge(VertexId(1), VertexId(2))));
+    /// ```
+    pub fn contains_edge(&self, edge: Edge) -> bool {
         let Edge(v1, v2) = edge;
         if self.contains_vertex(v1) && self.contains_vertex(v2) {
             // We need to look-up only for one of the vertices
@@ -74,49 +147,115 @@ impl Graph for DirectedGraph {
         }
     }
 
-    fn edges(&self) -> Vec<Edge> {
-        self.edge_map.values().flatten().map(|k| *k).collect()
+    /// An iterator visiting all the edges of the graph in arbitrary order.
+    /// The iterator element type is `&Edge`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    ///
+    /// let mut g = DirectedGraph::new();
+    /// g.add_edge(Edge(VertexId(1), VertexId(2)));
+    /// g.add_edge(Edge(VertexId(2), VertexId(3)));
+    ///
+    /// for &e in g.edges() {
+    ///     println!("{:?}", e);
+    /// }
+    ///
+    /// ```
+    pub fn edges(&self) -> impl Iterator<Item = &Edge> {
+        self.edge_map.values().flatten()
     }
-}
 
-impl Directed for DirectedGraph {
-    fn outbound_edges(&self, vertex_id: VertexId) -> Vec<Edge> {
+    /// An iterator visiting all the outbound edges of `vertex_id`.
+    /// The iterator element type is `&Edge`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    ///
+    /// let mut g = DirectedGraph::new();
+    /// g.add_edge(Edge(VertexId(1), VertexId(2)));
+    /// g.add_edge(Edge(VertexId(1), VertexId(3)));
+    ///
+    /// for &e in g.outbound_edges(VertexId(1)) {
+    ///     println!("{:?}", e);
+    /// }
+    ///
+    /// ```
+    pub fn outbound_edges(&self, vertex_id: VertexId) -> impl Iterator<Item = &Edge> {
         self.edge_map
             .get(&vertex_id)
-            .map(|edges| {
-                edges
-                    .iter()
-                    .filter(|Edge(src, _)| *src == vertex_id)
-                    .map(|edge| *edge)
-                    .collect()
-            })
-            .unwrap_or_else(|| vec![])
+            .into_iter()
+            .flat_map(|edges| edges.iter())
+            .filter(move |e| e.0 == vertex_id)
     }
 
-    fn inbound_edges(&self, vertex_id: VertexId) -> Vec<Edge> {
+    /// An iterator visiting all the inbound edges of `vertex_id`.
+    /// The iterator element type is `&Edge`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    ///
+    /// let mut g = DirectedGraph::new();
+    /// g.add_edge(Edge(VertexId(1), VertexId(3)));
+    /// g.add_edge(Edge(VertexId(2), VertexId(3)));
+    ///
+    /// for &e in g.inbound_edges(VertexId(3)) {
+    ///     println!("{:?}", e);
+    /// }
+    ///
+    /// ```
+    pub fn inbound_edges(&self, vertex_id: VertexId) -> impl Iterator<Item = &Edge> {
         self.edge_map
             .get(&vertex_id)
-            .map(|edges| {
-                edges
-                    .iter()
-                    .filter(|Edge(_, dest)| *dest == vertex_id)
-                    .map(|edge| *edge)
-                    .collect()
-            })
-            .unwrap_or_else(|| vec![])
+            .into_iter()
+            .flat_map(|edges| edges.iter())
+            .filter(move |e| e.1 == vertex_id)
     }
 
-    fn degree_out(&self, vertex_id: VertexId) -> usize {
-        self.outbound_edges(vertex_id).len()
+    /// Returns the number of outbound edges of `vertex_id`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    ///
+    /// let mut g = DirectedGraph::new();
+    /// assert_eq!(g.degree_out(VertexId(1)), 0);
+    /// g.add_edge(Edge(VertexId(1), VertexId(2)));
+    /// assert_eq!(g.degree_out(VertexId(1)), 1);
+    /// ```
+    pub fn degree_out(&self, vertex_id: VertexId) -> usize {
+        self.outbound_edges(vertex_id).count()
     }
 
-    fn degree_in(&self, vertex_id: VertexId) -> usize {
-        self.inbound_edges(vertex_id).len()
+    /// Returns the number of inbound edges of `vertex_id`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    ///
+    /// let mut g = DirectedGraph::new();
+    /// assert_eq!(g.degree_in(VertexId(1)), 0);
+    /// g.add_edge(Edge(VertexId(1), VertexId(2)));
+    /// assert_eq!(g.degree_in(VertexId(2)), 1);
+    /// ```
+    pub fn degree_in(&self, vertex_id: VertexId) -> usize {
+        self.inbound_edges(vertex_id).count()
     }
-}
 
-impl MutableGraph for DirectedGraph {
-    fn add_vertex(&mut self, vertex_id: VertexId) -> bool {
+    pub fn add_vertex(&mut self, vertex_id: VertexId) -> bool {
         let contains_vertex = self.edge_map.contains_key(&vertex_id);
         if !contains_vertex {
             self.edge_map.insert(vertex_id, Vec::new());
@@ -124,7 +263,7 @@ impl MutableGraph for DirectedGraph {
         contains_vertex
     }
 
-    fn remove_vertex(&mut self, vertex_id: VertexId) -> bool {
+    pub fn remove_vertex(&mut self, vertex_id: VertexId) -> bool {
         // We need to remove all edges containing the vertex
         if let Some((_, edges)) = self.edge_map.remove_entry(&vertex_id) {
             for edge in edges {
@@ -142,7 +281,7 @@ impl MutableGraph for DirectedGraph {
         }
     }
 
-    fn add_edge(&mut self, edge: Edge) -> bool {
+    pub fn add_edge(&mut self, edge: Edge) -> bool {
         if self.contains_edge(edge) {
             false
         } else {
@@ -155,7 +294,7 @@ impl MutableGraph for DirectedGraph {
         }
     }
 
-    fn remove_edge(&mut self, edge: Edge) -> bool {
+    pub fn remove_edge(&mut self, edge: Edge) -> bool {
         let Edge(v1, v2) = edge;
         let mut found = false;
         if let Some(found_v1) = self.edge_map.get_mut(&v1) {
