@@ -57,15 +57,39 @@ impl DirectedGraph {
         self.edge_map.len()
     }
 
+    /// Returns the number of edges in the graph
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    /// let mut g = DirectedGraph::new();
+    /// assert_eq!(g.edge_count(), 0);
+    /// g.add_edge(Edge(VertexId(1), VertexId(2)));
+    /// assert_eq!(g.edge_count(), 1);
+    /// ```
     pub fn edge_count(&self) -> usize {
         let mut count: usize = 0;
         for (_, edges) in &self.edge_map {
-            // each edge is saved twice => the count should be a multiple of 2, and divided by 2
-            count += edges.len() / 2
+            count += edges.len()
         }
-        count
+        // each edge is saved twice => the count should be a multiple of 2, and divided by 2
+        count / 2
     }
 
+    /// Returns true if the graph contains the `vertex_id`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::VertexId;
+    /// let mut g = DirectedGraph::new();
+    /// assert!(!g.contains_vertex(VertexId(1)));
+    /// g.add_vertex(VertexId(1));
+    /// assert!(g.contains_vertex(VertexId(1)));
+    /// ```
     pub fn contains_vertex(&self, vertex_id: VertexId) -> bool {
         self.edge_map.contains_key(&vertex_id)
     }
