@@ -47,7 +47,7 @@ impl GraphCommand {
         for &vertex_id in graph.vertices() {
             res.push(AddVertex(vertex_id))
         }
-        for Edge(v1, v2) in graph.edges() {
+        for &Edge(v1, v2) in graph.edges() {
             res.push(AddEdge(v1, v2))
         }
         res

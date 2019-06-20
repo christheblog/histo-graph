@@ -16,6 +16,7 @@ impl DirectedGraph {
     ///
     /// ```
     /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    ///
     /// let mut graph = DirectedGraph::new();
     /// ```
     pub fn new() -> DirectedGraph {
@@ -31,6 +32,7 @@ impl DirectedGraph {
     /// ```
     /// use histo_graph::core::graph::directed_graph::DirectedGraph;
     /// use histo_graph::core::graph::graph::VertexId;
+    ///
     /// let mut g = DirectedGraph::new();
     /// assert!(g.is_empty());
     /// g.add_vertex(VertexId(1));
@@ -48,6 +50,7 @@ impl DirectedGraph {
     /// ```
     /// use histo_graph::core::graph::directed_graph::DirectedGraph;
     /// use histo_graph::core::graph::graph::VertexId;
+    ///
     /// let mut g = DirectedGraph::new();
     /// assert_eq!(g.vertex_count(), 0);
     /// g.add_vertex(VertexId(1));
@@ -64,6 +67,7 @@ impl DirectedGraph {
     /// ```
     /// use histo_graph::core::graph::directed_graph::DirectedGraph;
     /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    ///
     /// let mut g = DirectedGraph::new();
     /// assert_eq!(g.edge_count(), 0);
     /// g.add_edge(Edge(VertexId(1), VertexId(2)));
@@ -85,6 +89,7 @@ impl DirectedGraph {
     /// ```
     /// use histo_graph::core::graph::directed_graph::DirectedGraph;
     /// use histo_graph::core::graph::graph::VertexId;
+    ///
     /// let mut g = DirectedGraph::new();
     /// assert!(!g.contains_vertex(VertexId(1)));
     /// g.add_vertex(VertexId(1));
@@ -94,13 +99,39 @@ impl DirectedGraph {
         self.edge_map.contains_key(&vertex_id)
     }
 
-    /// An iterator visiting all vertices in arbitrary order.
+    /// An iterator visiting all vertices of the graph in arbitrary order.
     /// The iterator element type is `&VertexId`
     ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    ///
+    /// let mut g = DirectedGraph::new();
+    /// g.add_edge(Edge(VertexId(1), VertexId(2)));
+    ///
+    /// for &v in g.vertices() {
+    ///     println!("{:?}", v);
+    /// }
+    /// ```
     pub fn vertices(&self) -> impl Iterator<Item=&VertexId> {
         self.edge_map.keys()
     }
 
+    /// Returns true if the graph contains the `edge`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    ///
+    /// let mut g = DirectedGraph::new();
+    /// assert!(!g.contains_edge(Edge(VertexId(1), VertexId(2))));
+    /// g.add_edge(Edge(VertexId(1), VertexId(2)));
+    /// assert!(g.contains_edge(Edge(VertexId(1), VertexId(2))));
+    /// ```
     pub fn contains_edge(&self, edge: Edge) -> bool {
         let Edge(v1, v2) = edge;
         if self.contains_vertex(v1) && self.contains_vertex(v2) {
@@ -116,9 +147,26 @@ impl DirectedGraph {
         }
     }
 
-    pub fn edges(&self) -> std::vec::IntoIter<Edge> {
-        let v: Vec<Edge> = self.edge_map.values().flatten().map(|k| *k).collect();
-        v.into_iter()
+    /// An iterator visiting all the edges of the graph in arbitrary order.
+    /// The iterator element type is `&Edge`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    ///
+    /// let mut g = DirectedGraph::new();
+    /// g.add_edge(Edge(VertexId(1), VertexId(2)));
+    /// g.add_edge(Edge(VertexId(2), VertexId(3)));
+    ///
+    /// for &e in g.edges() {
+    ///     println!("{:?}", e);
+    /// }
+    ///
+    /// ```
+    pub fn edges(&self) -> impl Iterator<Item = &Edge> {
+        self.edge_map.values().flatten()
     }
 
     pub fn outbound_edges(&self, vertex_id: VertexId) -> Vec<Edge> {
