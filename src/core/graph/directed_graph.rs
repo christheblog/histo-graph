@@ -59,7 +59,7 @@ impl DirectedGraph {
 
     /// Returns the number of edges in the graph
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```
     /// use histo_graph::core::graph::directed_graph::DirectedGraph;
@@ -94,9 +94,11 @@ impl DirectedGraph {
         self.edge_map.contains_key(&vertex_id)
     }
 
-    pub fn vertices(&self) -> std::vec::IntoIter<VertexId> {
-        let v: Vec<VertexId> = self.edge_map.keys().map(|k| *k).collect();
-        v.into_iter()
+    /// An iterator visiting all vertices in arbitrary order.
+    /// The iterator element type is `&VertexId`
+    ///
+    pub fn vertices(&self) -> impl Iterator<Item=&VertexId> {
+        self.edge_map.keys()
     }
 
     pub fn contains_edge(&self, edge: Edge) -> bool {

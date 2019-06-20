@@ -44,7 +44,7 @@ impl GraphCommand {
     pub fn as_commands(graph: &DirectedGraph) -> Vec<GraphCommand> {
         use GraphCommand::*;
         let mut res: Vec<GraphCommand> = vec![];
-        for vertex_id in graph.vertices() {
+        for &vertex_id in graph.vertices() {
             res.push(AddVertex(vertex_id))
         }
         for Edge(v1, v2) in graph.edges() {
