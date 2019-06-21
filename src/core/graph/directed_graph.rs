@@ -25,7 +25,7 @@ impl DirectedGraph {
         }
     }
 
-    /// Returns `true` if the graph contains no vertices nor edges.
+    /// Returns true if the graph contains no vertices nor edges.
     ///
     /// # Examples
     ///
@@ -313,6 +313,18 @@ impl DirectedGraph {
         }
     }
 
+    /// Adds an edge to the graph.
+    /// Returns false if the graph already contained the `edge`.
+    ///
+    /// # Examples
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    ///
+    /// let mut g = DirectedGraph::new();
+    /// assert!(g.add_edge(Edge(VertexId(1), VertexId(2))));
+    /// assert!(!g.add_edge(Edge(VertexId(1), VertexId(2))));
+    /// ```
     pub fn add_edge(&mut self, edge: Edge) -> bool {
         if self.contains_edge(edge) {
             false
@@ -326,6 +338,20 @@ impl DirectedGraph {
         }
     }
 
+    /// Removes and edge from the graph.
+    /// Returns true if that graph contained the `edge` before the removal.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    ///
+    /// let mut g = DirectedGraph::new();
+    /// g.add_edge(Edge(VertexId(1), VertexId(2)));
+    /// assert!(g.remove_edge(Edge(VertexId(1), VertexId(2))));
+    /// assert!(!g.remove_edge(Edge(VertexId(1), VertexId(2))));
+    /// ```
     pub fn remove_edge(&mut self, edge: Edge) -> bool {
         let Edge(v1, v2) = edge;
         let mut found = false;
