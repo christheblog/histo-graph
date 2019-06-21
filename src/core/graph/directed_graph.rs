@@ -292,15 +292,19 @@ impl DirectedGraph {
     /// assert!(!g.remove_vertex(VertexId(1)));
     /// ```
     pub fn remove_vertex(&mut self, vertex_id: VertexId) -> bool {
-        // We need to remove all edges containing the vertex
-        if let Some((_, edges)) = self.edge_map.remove_entry(&vertex_id) {
+        if let Some(edges) = self.edge_map.remove(&vertex_id) {
+            // We need to remove all edges containing the vertex
             for edge in edges {
                 let Edge(v1, v2) = edge;
                 if v1 != vertex_id {
-                    self.remove_edge(edge);
+                    self.edge_map
+                        .get_mut(&v1)
+                        .map(|v1_edges| remove_item(v1_edges, &edge));
                 }
                 if v2 != vertex_id {
-                    self.remove_edge(edge);
+                    self.edge_map
+                        .get_mut(&v2)
+                        .map(|v2_edges| remove_item(v2_edges, &edge));
                 }
             }
             true
