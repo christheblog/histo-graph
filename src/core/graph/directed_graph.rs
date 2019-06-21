@@ -279,6 +279,18 @@ impl DirectedGraph {
         contains_vertex
     }
 
+    /// Removes a vertex from the graph.
+    /// Returns true if the graph contained `vertex_id` before the removal.
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::VertexId;
+    ///
+    /// let mut g = DirectedGraph::new();
+    /// g.add_vertex(VertexId(1));
+    /// assert!(g.remove_vertex(VertexId(1)));
+    /// assert!(!g.remove_vertex(VertexId(1)));
+    /// ```
     pub fn remove_vertex(&mut self, vertex_id: VertexId) -> bool {
         // We need to remove all edges containing the vertex
         if let Some((_, edges)) = self.edge_map.remove_entry(&vertex_id) {
