@@ -255,11 +255,27 @@ impl DirectedGraph {
         self.inbound_edges(vertex_id).count()
     }
 
+
+    /// Adds a vertex to the graph. Returns true if the graph already contained `vertex_id `.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph::core::graph::graph::VertexId;
+    ///
+    /// let mut g = DirectedGraph::new();
+    /// assert!(!g.add_vertex(VertexId(1)));
+    /// assert!(g.add_vertex(VertexId(1)));
+    /// ```
     pub fn add_vertex(&mut self, vertex_id: VertexId) -> bool {
-        let contains_vertex = self.edge_map.contains_key(&vertex_id);
-        if !contains_vertex {
-            self.edge_map.insert(vertex_id, Vec::new());
-        }
+        let mut contains_vertex = true;
+        self.edge_map
+            .entry(vertex_id)
+            .or_insert_with(|| {
+                contains_vertex = false;
+                Vec::new()
+            });
         contains_vertex
     }
 
