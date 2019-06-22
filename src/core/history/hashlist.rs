@@ -19,9 +19,10 @@ impl HashList {
 
     /// creates a singleton list
     pub fn singleton(hash: NodeHash) -> Rc<HashList> {
-        Rc::new(HashList::Node {
+        use HashList::*;
+        Rc::new(Node {
             hash: hash,
-            tail: Rc::new(HashList::Nil),
+            tail: Rc::new(Nil),
         })
     }
 
@@ -34,10 +35,11 @@ impl HashList {
 
     /// Find the first common NodeHash between 2 HashLists
     pub fn first_common(l1: Rc<HashList>, l2: Rc<HashList>) -> Option<NodeHash> {
+        use HashList::*;
         match (l1.as_ref(), l2.as_ref()) {
-            (HashList::Nil, _) | (_, HashList::Nil) => None,
-            (HashList::Node { hash: x, .. }, HashList::Node { hash: y, .. }) if x == y => Some(*x),
-            (HashList::Node { hash: _, tail: xs }, _) => HashList::first_common(xs.clone(), l2),
+            (Nil, _) | (_, Nil) => None,
+            (Node { hash: x, .. }, Node { hash: y, .. }) if x == y => Some(*x),
+            (Node { hash: _, tail: xs }, _) => HashList::first_common(xs.clone(), l2),
         }
     }
 
@@ -63,9 +65,10 @@ impl HashList {
     }
 
     pub fn head_option(&self) -> Option<NodeHash> {
+        use HashList::*;
         match self {
-            HashList::Node { hash: x, .. } => Some(*x),
-            HashList::Nil => None,
+            Node { hash: x, .. } => Some(*x),
+            Nil => None,
         }
     }
 
@@ -77,9 +80,10 @@ impl HashList {
     }
 
     pub fn tail_option(&self) -> Option<Rc<HashList>> {
+        use HashList::*;
         match self {
-            HashList::Node { tail: xs, .. } => Some(xs.clone()),
-            HashList::Nil => None,
+            Node { tail: xs, .. } => Some(xs.clone()),
+            Nil => None,
         }
     }
 
@@ -98,14 +102,56 @@ impl HashList {
     where
         P: Fn(&NodeHash) -> bool,
     {
+        use HashList::*;
         match self {
-            HashList::Node {
+            Node {
                 hash: x, tail: xs, ..
-            } if predicate(x) => Rc::new(HashList::Node {
+            } if predicate(x) => Rc::new(Node {
                 hash: *x,
                 tail: xs.take_while(predicate),
             }),
-            _ => Rc::new(HashList::Nil),
+            _ => Rc::new(Nil),
         }
+    }
+
+    pub fn skip_while<P>(&self, predicate: P) -> Rc<HashList>
+    where
+        P: Fn(&NodeHash) -> bool,
+    {
+        use HashList::*;
+        match self {
+            Node {
+                hash: x, tail: xs, ..
+            } => {
+                if predicate(x) {
+                    xs.take_while(predicate)
+                } else {
+                    xs.clone()
+                }
+            }
+            _ => Rc::new(Nil),
+        }
+    }
+
+    // Iterator
+
+    pub fn iter(&self) -> HashListIter {
+        HashListIter {
+            current: Rc::new(self.clone()),
+        }
+    }
+}
+
+// Hashlist iterator
+pub struct HashListIter {
+    current: Rc<HashList>,
+}
+
+impl Iterator for HashListIter {
+    type Item = NodeHash;
+    fn next(&mut self) -> Option<Self::Item> {
+        let nxt = self.current.head_option();
+        self.current = self.current.tail().clone();
+        nxt
     }
 }
