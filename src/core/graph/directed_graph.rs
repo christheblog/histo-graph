@@ -1,11 +1,12 @@
 use crate::core::graph::graph::*;
 use std::collections::HashMap;
+use std::collections::btree_set::BTreeSet;
 
 /// A directed graph structure that doesn't contain any information concerning the vertex or the
 /// edge attributes
 pub struct DirectedGraph {
     // Each edge is indexed for by of both its vertices => 1 edge appears twice in the map
-    edge_map: HashMap<VertexId, Vec<Edge>>,
+    edge_map: HashMap<VertexId, BTreeSet<Edge>>,
 }
 
 impl DirectedGraph {
@@ -274,7 +275,7 @@ impl DirectedGraph {
             .entry(vertex_id)
             .or_insert_with(|| {
                 contains_vertex = false;
-                Vec::new()
+                BTreeSet::new()
             });
         contains_vertex
     }
@@ -299,12 +300,12 @@ impl DirectedGraph {
                 if v1 != vertex_id {
                     self.edge_map
                         .get_mut(&v1)
-                        .map(|v1_edges| remove_item(v1_edges, &edge));
+                        .map(|v1_edges| v1_edges.remove(&edge));
                 }
                 if v2 != vertex_id {
                     self.edge_map
                         .get_mut(&v2)
-                        .map(|v2_edges| remove_item(v2_edges, &edge));
+                        .map(|v2_edges| v2_edges.remove(&edge));
                 }
             }
             true
@@ -332,8 +333,8 @@ impl DirectedGraph {
             let Edge(v1, v2) = edge;
             self.add_vertex(v1);
             self.add_vertex(v2);
-            self.edge_map.get_mut(&v1).unwrap().push(edge);
-            self.edge_map.get_mut(&v2).unwrap().push(edge);
+            self.edge_map.get_mut(&v1).unwrap().insert(edge);
+            self.edge_map.get_mut(&v2).unwrap().insert(edge);
             true
         }
     }
@@ -356,23 +357,11 @@ impl DirectedGraph {
         let Edge(v1, v2) = edge;
         let mut found = false;
         if let Some(found_v1) = self.edge_map.get_mut(&v1) {
-            found |= remove_item(found_v1, &edge);
+            found |= found_v1.remove(&edge);
         }
         if let Some(found_v2) = self.edge_map.get_mut(&v2) {
-            found |= remove_item(found_v2, &edge);
+            found |= found_v2.remove(&edge);
         }
         found
-    }
-}
-
-// Helpers
-
-// Not available on Vec<A> ... for some reason ...
-fn remove_item<A: PartialEq>(xs: &mut Vec<A>, item: &A) -> bool {
-    if let Some(i) = xs.iter().position(|x| x == item) {
-        xs.remove(i);
-        true
-    } else {
-        false
     }
 }
