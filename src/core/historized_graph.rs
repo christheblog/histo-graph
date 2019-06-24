@@ -1,13 +1,26 @@
+use crate::core::graph::graph::*;
 use crate::core::graph::directed_graph::*;
-use crate::graph::*;
-use crate::history::history::*;
+use crate::core::graph::command::*;
+use crate::core::history::hashlist::*;
+use crate::core::history::history::*;
+
+type Commands = Vec<GraphCommand>;
+
+pub struct CommandHasher { }
+
+impl Hasher<Commands> for CommandHasher {
+    fn hash(&self, item: &Commands, previous: Option<NodeHash>) -> NodeHash {
+        unimplemented!()
+    }
+}
 
 pub struct HistorizedGraph {
-    repository: Repository<Vec<Commands>>,
+    repository: Repository<Commands, CommandHasher>,
     graph: DirectedGraph,
 }
 
-impl Graph for HistorizedGraph {
+impl HistorizedGraph {
+
     fn is_empty(&self) -> bool {
         self.graph.is_empty()
     }
@@ -20,22 +33,20 @@ impl Graph for HistorizedGraph {
     fn contains_vertex(&self, vertex_id: VertexId) -> bool {
         self.graph.contains_vertex(vertex_id)
     }
-    fn vertices(&self) -> Vec<VertexId> {
+    fn vertices(&self) -> impl Iterator<Item=&VertexId> {
         self.graph.vertices()
     }
     fn contains_edge(&self, edge: Edge) -> bool {
         self.graph.contains_edge(edge)
     }
-    fn edges(&self) -> Vec<Edge> {
+    fn edges(&self) -> impl Iterator<Item=&Edge> {
         self.graph.edges()
     }
-}
 
-impl Directed for HistorizedGraph {
-    fn outbound_edges(&self, vertex_id: VertexId) -> Vec<Edge> {
+    fn outbound_edges(&self, vertex_id: VertexId) -> impl Iterator<Item=&Edge> {
         self.graph.outbound_edges(vertex_id)
     }
-    fn inbound_edges(&self, vertex_id: VertexId) -> Vec<Edge> {
+    fn inbound_edges(&self, vertex_id: VertexId) -> impl Iterator<Item=&Edge> {
         self.graph.inbound_edges(vertex_id)
     }
     fn degree_out(&self, vertex_id: VertexId) -> usize {
@@ -44,9 +55,7 @@ impl Directed for HistorizedGraph {
     fn degree_in(&self, vertex_id: VertexId) -> usize {
         self.graph.degree_in(vertex_id)
     }
-}
 
-impl MutableGraph for HistorizedGraph {
     fn add_vertex(&mut self, vertex_id: VertexId) -> bool {
         match commit_command(self, GraphCommand::AddVertex(vertex_id)) {
             Err(_) => false,
@@ -79,7 +88,7 @@ impl MutableGraph for HistorizedGraph {
 
 fn commit_command(repo: &mut HistorizedGraph, command: GraphCommand) -> Result<Ref, String> {
     repo.repository.commit(
-        command,
+        vec![command],
         Author("auto".to_string()),
         Comment("auto".to_string()),
     )
