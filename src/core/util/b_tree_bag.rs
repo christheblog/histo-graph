@@ -63,3 +63,74 @@ impl<T> BTreeBag<T>
         })
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::BTreeBag;
+    use crate::core::graph::graph::{Edge, VertexId};
+
+    use rand::{thread_rng, Rng};
+
+    #[test]
+    fn test_insert_one() {
+        let mut btb: BTreeBag<Edge> = BTreeBag::new();
+        btb.insert(Edge(VertexId(0), VertexId(1)));
+
+        let rslt: Vec<&Edge> = btb.iter().collect();
+        assert_eq!(rslt, vec![&Edge(VertexId(0), VertexId(1))]);
+    }
+
+    #[test]
+    fn test_insert_two_different() {
+        let mut btb: BTreeBag<Edge> = BTreeBag::new();
+        btb.insert(Edge(VertexId(0), VertexId(1)));
+        btb.insert(Edge(VertexId(0), VertexId(2)));
+
+        let rslt: Vec<&Edge> = btb.iter().collect();
+        assert_eq!(rslt, vec![&Edge(VertexId(0), VertexId(1)), &Edge(VertexId(1), VertexId(2))]);
+    }
+
+    #[test]
+    fn test_insert_two_different_in_opposite_order() {
+        let mut btb: BTreeBag<Edge> = BTreeBag::new();
+        btb.insert(Edge(VertexId(1), VertexId(2)));
+        btb.insert(Edge(VertexId(0), VertexId(1)));
+
+        let rslt: Vec<&Edge> = btb.iter().collect();
+        assert_eq!(rslt, vec![&Edge(VertexId(0), VertexId(1)), &Edge(VertexId(1), VertexId(2))]);
+    }
+
+    #[test]
+    fn test_insert_two_equal() {
+        let mut btb: BTreeBag<Edge> = BTreeBag::new();
+        btb.insert(Edge(VertexId(0), VertexId(1)));
+        btb.insert(Edge(VertexId(0), VertexId(1)));
+
+        let rslt: Vec<&Edge> = btb.iter().collect();
+        assert_eq!(rslt, vec![&Edge(VertexId(0), VertexId(1)), &Edge(VertexId(0), VertexId(1))]);
+    }
+
+    #[test]
+    fn test_insert_many() {
+        let mut rng = thread_rng();
+
+        // create a vector with 30 edges, with VertexIds between 0 and 3. That creates many
+        // duplicate edges.
+        let mut edges: Vec<Edge> = vec![];
+        for _ in 0..30 {
+            edges.push(Edge(VertexId(rng.gen_range::<u64>(0, 3)), VertexId(rng.gen_range::<u64>(0, 3))))
+        }
+
+        let mut btb: BTreeBag<Edge> = BTreeBag::new();
+
+        // insert the edges into the BTreeBag
+        for e in edges.iter() {
+            btb.insert(*e);
+        }
+
+        // the iterator of the BTreeMap should visit the edges in sorted order
+        let rslt: Vec<Edge> = btb.iter().map(|edge| *edge).collect();
+        let sorted_edges = {edges.sort(); edges };
+        assert_eq!(rslt,sorted_edges);
+    }
+}
