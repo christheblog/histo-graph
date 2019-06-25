@@ -12,15 +12,15 @@ pub struct BTreeBag<T> {
     inner: BTreeMap<T, usize>
 }
 
-struct DuplicationState<'a, T> {
+struct DuplicationIter<'a, T> {
     element: &'a T,
     total_count: usize,
     current_count: usize,
 }
 
-impl<'a, T> From<(&'a T, &'a usize)> for DuplicationState<'a, T> {
-    fn from(kv: (&'a T, &'a usize)) -> DuplicationState<'a, T> {
-        DuplicationState {
+impl<'a, T> From<(&'a T, &'a usize)> for DuplicationIter<'a, T> {
+    fn from(kv: (&'a T, &'a usize)) -> DuplicationIter<'a, T> {
+        DuplicationIter {
             element: kv.0,
             total_count: *kv.1,
             current_count: 0,
@@ -28,7 +28,7 @@ impl<'a, T> From<(&'a T, &'a usize)> for DuplicationState<'a, T> {
     }
 }
 
-impl<'a, T> Iterator for DuplicationState<'a, T> {
+impl<'a, T> Iterator for DuplicationIter<'a, T> {
     type Item = &'a T;
 
     fn next(&mut self) -> Option<&'a T> {
@@ -56,9 +56,27 @@ impl<T> BTreeBag<T>
             .or_insert(1);
     }
 
+    pub fn remove(&mut self, t: &T) -> bool {
+        let mut has_been_removed = false;
+        let must_remove = self.inner
+            .get_mut(t)
+            .map(|count| {
+                *count -= 1;
+                has_been_removed = true;
+                *count == 0
+            });
+
+        match must_remove {
+            Some(true) => { self.inner.remove(t); }
+            _ => ()
+        }
+
+        has_been_removed
+    }
+
     pub fn iter<'a>(&'a self) -> impl Iterator<Item=&'a T> {
         self.inner.iter().flat_map(|kv| {
-            let i: DuplicationState<'a, T> = kv.into();
+            let i: DuplicationIter<'a, T> = kv.into();
             i
         })
     }
@@ -132,5 +150,37 @@ mod test {
         let rslt: Vec<Edge> = btb.iter().map(|edge| *edge).collect();
         let sorted_edges = {edges.sort(); edges };
         assert_eq!(rslt,sorted_edges);
+    }
+
+    #[test]
+    fn remove_one_of_one() {
+        let mut btb: BTreeBag<Edge> = BTreeBag::new();
+        btb.insert(Edge(VertexId(0), VertexId(1)));
+        btb.remove(&Edge(VertexId(0), VertexId(1)));
+
+        let rslt: Vec<&Edge> = btb.iter().collect();
+        assert_eq!(rslt, Vec::<&Edge>::new());
+    }
+
+    #[test]
+    fn remove_one_of_two() {
+        let mut btb: BTreeBag<Edge> = BTreeBag::new();
+        btb.insert(Edge(VertexId(0), VertexId(1)));
+        btb.insert(Edge(VertexId(1), VertexId(2)));
+        btb.remove(&Edge(VertexId(0), VertexId(1)));
+
+        let rslt: Vec<&Edge> = btb.iter().collect();
+        assert_eq!(rslt, vec![&Edge(VertexId(1), VertexId(2))]);
+    }
+
+    #[test]
+    fn remove_one_of_two_equal() {
+        let mut btb: BTreeBag<Edge> = BTreeBag::new();
+        btb.insert(Edge(VertexId(0), VertexId(1)));
+        btb.insert(Edge(VertexId(0), VertexId(1)));
+        btb.remove(&Edge(VertexId(0), VertexId(1)));
+
+        let rslt: Vec<&Edge> = btb.iter().collect();
+        assert_eq!(rslt, vec![&Edge(VertexId(0), VertexId(1))]);
     }
 }
