@@ -8,6 +8,23 @@
 
 use std::collections::btree_map::BTreeMap;
 
+/// A `BTreeBag` is a collection that can hold the same element more than once, and provides "excellent performance"
+/// for insertion and removal.
+///
+/// # Examples
+///
+/// ```
+/// use histo_graph::core::util::b_tree_bag::BTreeBag;
+///
+/// let mut bag: BTreeBag<u32> = BTreeBag::new();
+/// bag.insert(1);
+/// bag.insert(2);
+/// bag.insert(2);
+///
+/// for &i in bag.iter() {
+///     println!("{}", i);
+/// }
+/// ```
 pub struct BTreeBag<T> {
     inner: BTreeMap<T, usize>
 }
@@ -43,12 +60,32 @@ impl<'a, T> Iterator for DuplicationIter<'a, T> {
 
 impl<T> BTreeBag<T>
     where T: Ord {
+
+    /// Creates an empty BTreeBag
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::util::b_tree_bag::BTreeBag;
+    ///
+    /// let mut bag: BTreeBag<u32> = BTreeBag::new();
+    /// ```
     pub fn new() -> BTreeBag<T> {
         BTreeBag {
             inner: BTreeMap::new(),
         }
     }
 
+    /// Inserts an element into the BTreeBag.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::util::b_tree_bag::BTreeBag;
+    ///
+    /// let mut bag: BTreeBag<u32> = BTreeBag::new();
+    /// bag.insert(1);
+    /// ```
     pub fn insert(&mut self, t: T) {
         self.inner
             .entry(t)
@@ -56,6 +93,19 @@ impl<T> BTreeBag<T>
             .or_insert(1);
     }
 
+    /// Removes an element from the BTreeBag.
+    /// Returns true if the BTreeBag contained the element before the removal.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::util::b_tree_bag::BTreeBag;
+    ///
+    /// let mut bag: BTreeBag<u32> = BTreeBag::new();
+    /// bag.insert(1);
+    /// assert!(bag.remove(&1));
+    /// assert!(!bag.remove(&1));
+    /// ```
     pub fn remove(&mut self, t: &T) -> bool {
         let mut has_been_removed = false;
         let must_remove = self.inner
@@ -74,6 +124,21 @@ impl<T> BTreeBag<T>
         has_been_removed
     }
 
+    /// An iterator that visits the elements in the BTreeBag in sorted order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::util::b_tree_bag::BTreeBag;
+    ///
+    /// let mut bag: BTreeBag<u32> = BTreeBag::new();
+    /// bag.insert(1);
+    /// bag.insert(3);
+    /// bag.insert(2);
+    ///
+    /// let vec: Vec<&u32> = bag.iter().collect();
+    /// assert_eq!(vec, vec![&1, &2, &3]);
+    /// ```
     pub fn iter<'a>(&'a self) -> impl Iterator<Item=&'a T> {
         self.inner.iter().flat_map(|kv| {
             let i: DuplicationIter<'a, T> = kv.into();
@@ -102,7 +167,7 @@ mod test {
     fn test_insert_two_different() {
         let mut btb: BTreeBag<Edge> = BTreeBag::new();
         btb.insert(Edge(VertexId(0), VertexId(1)));
-        btb.insert(Edge(VertexId(0), VertexId(2)));
+        btb.insert(Edge(VertexId(1), VertexId(2)));
 
         let rslt: Vec<&Edge> = btb.iter().collect();
         assert_eq!(rslt, vec![&Edge(VertexId(0), VertexId(1)), &Edge(VertexId(1), VertexId(2))]);
