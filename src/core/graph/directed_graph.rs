@@ -1,6 +1,9 @@
-use crate::core::graph::graph::*;
 use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
+
+use crate::core::graph::graph::*;
 use crate::core::util::b_tree_bag::BTreeBag;
+use std::collections::btree_map::BTreeMap;
 
 /// A directed graph structure that doesn't contain any information concerning the vertex or the
 /// edge attributes
@@ -363,5 +366,50 @@ impl DirectedGraph {
             found |= found_v2.remove(&edge);
         }
         found
+    }
+}
+
+impl Hash for DirectedGraph {
+
+    /// Hashes the `DirectedGraph`.
+    /// It does so by putting the elements of the underlying HashMap into a `BTreeMap`, which
+    /// implements `Hash`.
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let vertex_b_tree_map: BTreeMap<&VertexId, &BTreeBag<Edge>> =
+          self.edge_map.iter().collect();
+
+        vertex_b_tree_map.hash(state);
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::DirectedGraph;
+    use crate::core::graph::graph::{Edge, VertexId};
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+
+    #[test]
+    fn test_hash() {
+        let mut graph = DirectedGraph::new();
+        graph.add_edge(Edge(VertexId(0), VertexId(1)));
+        graph.add_edge(Edge(VertexId(1), VertexId(2)));
+
+        let mut hasher = DefaultHasher::new();
+        graph.hash(&mut hasher);
+
+        let hash_code_1 = hasher.finish();
+
+        let mut graph = DirectedGraph::new();
+        // mind the changed order
+        graph.add_edge(Edge(VertexId(0), VertexId(1)));
+        graph.add_edge(Edge(VertexId(1), VertexId(2)));
+
+        let mut hasher = DefaultHasher::new();
+        graph.hash(&mut hasher);
+
+        let hash_code_2 = hasher.finish();
+        
+        assert_eq!(hash_code_1, hash_code_2);
     }
 }
