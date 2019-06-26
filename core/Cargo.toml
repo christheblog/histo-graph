@@ -1,0 +1,9 @@
+[package]
+name = "histo-graph-core"
+version = "0.1.0"
+authors = ["cacr <christheblog@gmail.com>", "David Peklak <dpeklak@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+rand = "0.5"
+serde = { version = "1.0.92", features = ["derive"] }

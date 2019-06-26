@@ -4,8 +4,8 @@ use std::rc::Rc;
 use core::fmt::Debug;
 use core::hash::Hash;
 
-use crate::core::history::hashlist::*;
-use crate::core::history::history::Ref::*;
+use crate::history::hashlist::*;
+use crate::history::history::Ref::*;
 
 type Hashs = Rc<HashList>;
 

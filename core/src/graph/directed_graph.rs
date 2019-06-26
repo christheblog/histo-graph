@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use serde::Serialize;
 
-use crate::core::graph::graph::*;
-use crate::core::util::b_tree_bag::BTreeBag;
+use crate::graph::graph::*;
+use crate::util::b_tree_bag::BTreeBag;
 use std::collections::btree_map::BTreeMap;
 
 /// A directed graph structure that doesn't contain any information concerning the vertex or the
@@ -21,7 +21,7 @@ impl DirectedGraph {
     /// # Examples
     ///
     /// ```
-    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph_core::graph::directed_graph::DirectedGraph;
     ///
     /// let mut graph = DirectedGraph::new();
     /// ```
@@ -36,8 +36,8 @@ impl DirectedGraph {
     /// # Examples
     ///
     /// ```
-    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
-    /// use histo_graph::core::graph::graph::VertexId;
+    /// use histo_graph_core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph_core::graph::graph::VertexId;
     ///
     /// let mut g = DirectedGraph::new();
     /// assert!(g.is_empty());
@@ -54,8 +54,8 @@ impl DirectedGraph {
     /// # Examples
     ///
     /// ```
-    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
-    /// use histo_graph::core::graph::graph::VertexId;
+    /// use histo_graph_core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph_core::graph::graph::VertexId;
     ///
     /// let mut g = DirectedGraph::new();
     /// assert_eq!(g.vertex_count(), 0);
@@ -71,8 +71,8 @@ impl DirectedGraph {
     /// # Examples
     ///
     /// ```
-    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
-    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    /// use histo_graph_core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph_core::graph::graph::{VertexId, Edge};
     ///
     /// let mut g = DirectedGraph::new();
     /// assert_eq!(g.edge_count(), 0);
@@ -93,8 +93,8 @@ impl DirectedGraph {
     /// # Examples
     ///
     /// ```
-    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
-    /// use histo_graph::core::graph::graph::VertexId;
+    /// use histo_graph_core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph_core::graph::graph::VertexId;
     ///
     /// let mut g = DirectedGraph::new();
     /// assert!(!g.contains_vertex(VertexId(1)));
@@ -111,8 +111,8 @@ impl DirectedGraph {
     /// # Examples
     ///
     /// ```
-    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
-    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    /// use histo_graph_core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph_core::graph::graph::{VertexId, Edge};
     ///
     /// let mut g = DirectedGraph::new();
     /// g.add_edge(Edge(VertexId(1), VertexId(2)));
@@ -130,8 +130,8 @@ impl DirectedGraph {
     /// # Examples
     ///
     /// ```
-    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
-    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    /// use histo_graph_core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph_core::graph::graph::{VertexId, Edge};
     ///
     /// let mut g = DirectedGraph::new();
     /// assert!(!g.contains_edge(Edge(VertexId(1), VertexId(2))));
@@ -159,8 +159,8 @@ impl DirectedGraph {
     /// # Examples
     ///
     /// ```
-    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
-    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    /// use histo_graph_core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph_core::graph::graph::{VertexId, Edge};
     ///
     /// let mut g = DirectedGraph::new();
     /// g.add_edge(Edge(VertexId(1), VertexId(2)));
@@ -181,8 +181,8 @@ impl DirectedGraph {
     /// # Examples
     ///
     /// ```
-    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
-    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    /// use histo_graph_core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph_core::graph::graph::{VertexId, Edge};
     ///
     /// let mut g = DirectedGraph::new();
     /// g.add_edge(Edge(VertexId(1), VertexId(2)));
@@ -207,8 +207,8 @@ impl DirectedGraph {
     /// # Examples
     ///
     /// ```
-    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
-    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    /// use histo_graph_core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph_core::graph::graph::{VertexId, Edge};
     ///
     /// let mut g = DirectedGraph::new();
     /// g.add_edge(Edge(VertexId(1), VertexId(3)));
@@ -232,8 +232,8 @@ impl DirectedGraph {
     /// # Examples
     ///
     /// ```
-    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
-    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    /// use histo_graph_core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph_core::graph::graph::{VertexId, Edge};
     ///
     /// let mut g = DirectedGraph::new();
     /// assert_eq!(g.degree_out(VertexId(1)), 0);
@@ -249,8 +249,8 @@ impl DirectedGraph {
     /// # Examples
     ///
     /// ```
-    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
-    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    /// use histo_graph_core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph_core::graph::graph::{VertexId, Edge};
     ///
     /// let mut g = DirectedGraph::new();
     /// assert_eq!(g.degree_in(VertexId(1)), 0);
@@ -267,8 +267,8 @@ impl DirectedGraph {
     /// # Examples
     ///
     /// ```
-    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
-    /// use histo_graph::core::graph::graph::VertexId;
+    /// use histo_graph_core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph_core::graph::graph::VertexId;
     ///
     /// let mut g = DirectedGraph::new();
     /// assert!(!g.add_vertex(VertexId(1)));
@@ -289,8 +289,8 @@ impl DirectedGraph {
     /// Returns true if the graph contained `vertex_id` before the removal.
     ///
     /// ```
-    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
-    /// use histo_graph::core::graph::graph::VertexId;
+    /// use histo_graph_core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph_core::graph::graph::VertexId;
     ///
     /// let mut g = DirectedGraph::new();
     /// g.add_vertex(VertexId(1));
@@ -324,8 +324,8 @@ impl DirectedGraph {
     ///
     /// # Examples
     /// ```
-    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
-    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    /// use histo_graph_core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph_core::graph::graph::{VertexId, Edge};
     ///
     /// let mut g = DirectedGraph::new();
     /// assert!(g.add_edge(Edge(VertexId(1), VertexId(2))));
@@ -350,8 +350,8 @@ impl DirectedGraph {
     /// # Examples
     ///
     /// ```
-    /// use histo_graph::core::graph::directed_graph::DirectedGraph;
-    /// use histo_graph::core::graph::graph::{VertexId, Edge};
+    /// use histo_graph_core::graph::directed_graph::DirectedGraph;
+    /// use histo_graph_core::graph::graph::{VertexId, Edge};
     ///
     /// let mut g = DirectedGraph::new();
     /// g.add_edge(Edge(VertexId(1), VertexId(2)));
@@ -387,7 +387,7 @@ impl Hash for DirectedGraph {
 #[cfg(test)]
 mod test {
     use super::DirectedGraph;
-    use crate::core::graph::graph::{Edge, VertexId};
+    use crate::graph::graph::{Edge, VertexId};
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
 

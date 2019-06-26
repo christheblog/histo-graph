@@ -15,7 +15,7 @@ use serde::Serialize;
 /// # Examples
 ///
 /// ```
-/// use histo_graph::core::util::b_tree_bag::BTreeBag;
+/// use histo_graph_core::util::b_tree_bag::BTreeBag;
 ///
 /// let mut bag: BTreeBag<u32> = BTreeBag::new();
 /// bag.insert(1);
@@ -69,7 +69,7 @@ impl<T> BTreeBag<T>
     /// # Examples
     ///
     /// ```
-    /// use histo_graph::core::util::b_tree_bag::BTreeBag;
+    /// use histo_graph_core::util::b_tree_bag::BTreeBag;
     ///
     /// let mut bag: BTreeBag<u32> = BTreeBag::new();
     /// ```
@@ -84,7 +84,7 @@ impl<T> BTreeBag<T>
     /// # Examples
     ///
     /// ```
-    /// use histo_graph::core::util::b_tree_bag::BTreeBag;
+    /// use histo_graph_core::util::b_tree_bag::BTreeBag;
     ///
     /// let mut bag: BTreeBag<u32> = BTreeBag::new();
     /// bag.insert(1);
@@ -102,7 +102,7 @@ impl<T> BTreeBag<T>
     /// # Examples
     ///
     /// ```
-    /// use histo_graph::core::util::b_tree_bag::BTreeBag;
+    /// use histo_graph_core::util::b_tree_bag::BTreeBag;
     ///
     /// let mut bag: BTreeBag<u32> = BTreeBag::new();
     /// bag.insert(1);
@@ -132,7 +132,7 @@ impl<T> BTreeBag<T>
     /// # Examples
     ///
     /// ```
-    /// use histo_graph::core::util::b_tree_bag::BTreeBag;
+    /// use histo_graph_core::util::b_tree_bag::BTreeBag;
     ///
     /// let mut bag: BTreeBag<u32> = BTreeBag::new();
     /// bag.insert(1);
@@ -154,7 +154,7 @@ impl<T> BTreeBag<T>
     /// # Examples
     ///
     /// ```
-    /// use histo_graph::core::util::b_tree_bag::BTreeBag;
+    /// use histo_graph_core::util::b_tree_bag::BTreeBag;
     ///
     /// let mut bag: BTreeBag<u32> = BTreeBag::new();
     /// bag.insert(1);
@@ -171,7 +171,7 @@ impl<T> BTreeBag<T>
 #[cfg(test)]
 mod test {
     use super::BTreeBag;
-    use crate::core::graph::graph::{Edge, VertexId};
+    use crate::graph::graph::{Edge, VertexId};
 
     use rand::{thread_rng, Rng};
 

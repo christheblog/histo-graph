@@ -1,5 +1,5 @@
-use crate::core::graph::graph::{VertexId, Edge};
-use crate::core::graph::directed_graph::DirectedGraph;
+use crate::graph::graph::{VertexId, Edge};
+use crate::graph::directed_graph::DirectedGraph;
 
 /// A command to manipulate a [`DirectedGraph`]
 ///
