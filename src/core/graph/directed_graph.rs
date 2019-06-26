@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
+use serde::Serialize;
 
 use crate::core::graph::graph::*;
 use crate::core::util::b_tree_bag::BTreeBag;
@@ -7,6 +8,7 @@ use std::collections::btree_map::BTreeMap;
 
 /// A directed graph structure that doesn't contain any information concerning the vertex or the
 /// edge attributes
+#[derive(Serialize)]
 pub struct DirectedGraph {
     // Each edge is indexed for by of both its vertices => 1 edge appears twice in the map
     edge_map: HashMap<VertexId, BTreeBag<Edge>>,
