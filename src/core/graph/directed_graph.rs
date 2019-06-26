@@ -409,7 +409,7 @@ mod test {
         graph.hash(&mut hasher);
 
         let hash_code_2 = hasher.finish();
-        
+
         assert_eq!(hash_code_1, hash_code_2);
     }
 }
