@@ -25,6 +25,7 @@ use std::collections::btree_map::BTreeMap;
 ///     println!("{}", i);
 /// }
 /// ```
+#[derive(Hash)]
 pub struct BTreeBag<T> {
     inner: BTreeMap<T, usize>
 }
@@ -144,6 +145,24 @@ impl<T> BTreeBag<T>
             let i: DuplicationIter<'a, T> = kv.into();
             i
         })
+    }
+
+    /// Returns the number of elements in the BTreeBag.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use histo_graph::core::util::b_tree_bag::BTreeBag;
+    ///
+    /// let mut bag: BTreeBag<u32> = BTreeBag::new();
+    /// bag.insert(1);
+    /// bag.insert(2);
+    /// bag.insert(2);
+    ///
+    /// assert_eq!(bag.len(), 3);
+    /// ```
+    pub fn len(&self) -> usize {
+        self.iter().count()
     }
 }
 

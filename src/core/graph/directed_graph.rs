@@ -1,12 +1,12 @@
 use crate::core::graph::graph::*;
 use std::collections::HashMap;
-use std::collections::btree_set::BTreeSet;
+use crate::core::util::b_tree_bag::BTreeBag;
 
 /// A directed graph structure that doesn't contain any information concerning the vertex or the
 /// edge attributes
 pub struct DirectedGraph {
     // Each edge is indexed for by of both its vertices => 1 edge appears twice in the map
-    edge_map: HashMap<VertexId, BTreeSet<Edge>>,
+    edge_map: HashMap<VertexId, BTreeBag<Edge>>,
 }
 
 impl DirectedGraph {
@@ -167,7 +167,7 @@ impl DirectedGraph {
     ///
     /// ```
     pub fn edges(&self) -> impl Iterator<Item = &Edge> {
-        self.edge_map.values().flatten()
+        self.edge_map.values().map(|bag| bag.iter()).flatten()
     }
 
     /// An iterator visiting all the outbound edges of `vertex_id`.
@@ -275,7 +275,7 @@ impl DirectedGraph {
             .entry(vertex_id)
             .or_insert_with(|| {
                 contains_vertex = false;
-                BTreeSet::new()
+                BTreeBag::new()
             });
         contains_vertex
     }
@@ -295,7 +295,7 @@ impl DirectedGraph {
     pub fn remove_vertex(&mut self, vertex_id: VertexId) -> bool {
         if let Some(edges) = self.edge_map.remove(&vertex_id) {
             // We need to remove all edges containing the vertex
-            for edge in edges {
+            for &edge in edges.iter() {
                 let Edge(v1, v2) = edge;
                 if v1 != vertex_id {
                     self.edge_map
