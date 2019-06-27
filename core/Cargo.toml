@@ -6,4 +6,3 @@ edition = "2018"
 
 [dependencies]
 rand = "0.5"
-serde = { version = "1.0.92", features = ["derive"] }

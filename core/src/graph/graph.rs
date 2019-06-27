@@ -5,15 +5,13 @@
 //! [`VertexId`]: struct.VertexId.html
 //! [`Edge`]: struct.Edge.html
 
-use serde::Serialize;
-
 /// Identifies and represents a vertex in a graph.
-#[derive(PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Debug, Serialize)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Debug)]
 pub struct VertexId(pub u64);
 
 /// Represents a directed edge in a graph.
 /// The first `VertexId` is the start of the edge, the second `VertexId` is its end.
-#[derive(PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Debug, Serialize)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Debug)]
 pub struct Edge(pub VertexId, pub VertexId);
 
 impl Edge {

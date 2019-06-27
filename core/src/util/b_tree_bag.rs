@@ -7,7 +7,6 @@
 //! 4) Implement Hash, PartialOrd.
 
 use std::collections::btree_map::BTreeMap;
-use serde::Serialize;
 
 /// A `BTreeBag` is a collection that can hold the same element more than once, and provides "excellent performance"
 /// for insertion and removal.
@@ -26,7 +25,7 @@ use serde::Serialize;
 ///     println!("{}", i);
 /// }
 /// ```
-#[derive(Hash, Serialize)]
+#[derive(Hash)]
 pub struct BTreeBag<T>
     where T: Ord {
     inner: BTreeMap<T, usize>
