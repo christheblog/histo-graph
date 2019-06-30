@@ -72,7 +72,10 @@ impl HistorizedGraph {
         let Edge(v1, v2) = edge;
         match commit_command(self, GraphCommand::AddEdge(v1, v2)) {
             Err(_) => false,
-            Ok(_) => self.graph.add_edge(edge),
+            Ok(_) => {
+                self.graph.add_edge(edge);
+                true
+            },
         }
     }
     fn remove_edge(&mut self, edge: Edge) -> bool {

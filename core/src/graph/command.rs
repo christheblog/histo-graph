@@ -41,13 +41,13 @@ impl GraphCommand {
     }
 
     /// Applies the command to a MutableGraph.
-    pub fn apply_to(&self, graph: &mut DirectedGraph) -> bool {
+    pub fn apply_to(&self, graph: &mut DirectedGraph) {
         use GraphCommand::*;
         match self {
-            AddVertex(v) => graph.add_vertex(*v),
-            RemoveVertex(v) => graph.remove_vertex(*v),
-            AddEdge(v1, v2) => graph.add_edge(Edge(*v1, *v2)),
-            RemoveEdge(v1, v2) => graph.remove_edge(Edge(*v1, *v2)),
+            AddVertex(v) => { graph.add_vertex(*v); }
+            RemoveVertex(v) =>  { graph.remove_vertex(*v); }
+            AddEdge(v1, v2) => { graph.add_edge(Edge(*v1, *v2)); }
+            RemoveEdge(v1, v2) => { graph.remove_edge(Edge(*v1, *v2)); }
         }
     }
 

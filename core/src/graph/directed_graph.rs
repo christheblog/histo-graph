@@ -7,6 +7,7 @@ use std::collections::btree_map::BTreeMap;
 
 /// A directed graph structure that doesn't contain any information concerning the vertex or the
 /// edge attributes
+#[derive(Debug, PartialEq)]
 pub struct DirectedGraph {
     // Each edge is indexed for by of both its vertices => 1 edge appears twice in the map
     edge_map: HashMap<VertexId, BTreeBag<Edge>>,
@@ -78,12 +79,16 @@ impl DirectedGraph {
     /// assert_eq!(g.edge_count(), 1);
     /// ```
     pub fn edge_count(&self) -> usize {
-        let mut count: usize = 0;
+        let mut total_count: usize = 0;
         for (_, edges) in &self.edge_map {
-            count += edges.len()
+            let count: usize = edges
+                .iter()
+                .map(|&Edge(v1, v2)| if v1 == v2 { 2 } else { 1 })
+                .sum();
+            total_count += count;
         }
         // each edge is saved twice => the count should be a multiple of 2, and divided by 2
-        count / 2
+        total_count / 2
     }
 
     /// Returns true if the graph contains the `vertex_id`
@@ -170,7 +175,12 @@ impl DirectedGraph {
     ///
     /// ```
     pub fn edges(&self) -> impl Iterator<Item = &Edge> {
-        self.edge_map.values().map(|bag| bag.iter()).flatten()
+        self.edge_map.iter()
+            .map(|(vertex_id, bag)| {
+                bag.iter()
+                    .filter(move |Edge(from, to)| *vertex_id == *from)
+            })
+            .flatten()
     }
 
     /// An iterator visiting all the outbound edges of `vertex_id`.
@@ -318,7 +328,6 @@ impl DirectedGraph {
     }
 
     /// Adds an edge to the graph.
-    /// Returns false if the graph already contained the `edge`.
     ///
     /// # Examples
     /// ```
@@ -326,19 +335,15 @@ impl DirectedGraph {
     /// use histo_graph_core::graph::graph::{VertexId, Edge};
     ///
     /// let mut g = DirectedGraph::new();
-    /// assert!(g.add_edge(Edge(VertexId(1), VertexId(2))));
-    /// assert!(!g.add_edge(Edge(VertexId(1), VertexId(2))));
+    /// g.add_edge(Edge(VertexId(1), VertexId(2)));
     /// ```
-    pub fn add_edge(&mut self, edge: Edge) -> bool {
-        if self.contains_edge(edge) {
-            false
-        } else {
-            let Edge(v1, v2) = edge;
-            self.add_vertex(v1);
-            self.add_vertex(v2);
-            self.edge_map.get_mut(&v1).unwrap().insert(edge);
+    pub fn add_edge(&mut self, edge: Edge) {
+        let Edge(v1, v2) = edge;
+        self.add_vertex(v1);
+        self.add_vertex(v2);
+        self.edge_map.get_mut(&v1).unwrap().insert(edge);
+        if edge.0 != edge.1 {
             self.edge_map.get_mut(&v2).unwrap().insert(edge);
-            true
         }
     }
 
@@ -411,5 +416,31 @@ mod test {
         let hash_code_2 = hasher.finish();
 
         assert_eq!(hash_code_1, hash_code_2);
+    }
+
+    #[test]
+    fn test_ne() {
+        let mut graph_1 = DirectedGraph::new();
+        graph_1.add_vertex(VertexId(0));
+        graph_1.add_vertex(VertexId(1));
+        graph_1.add_vertex(VertexId(2));
+
+        graph_1.add_edge(Edge(VertexId(0), VertexId(1)));
+        graph_1.add_edge(Edge(VertexId(0), VertexId(2)));
+        graph_1.add_edge(Edge(VertexId(0), VertexId(0)));
+
+        let mut graph_2 = DirectedGraph::new();
+        graph_2.add_vertex(VertexId(0));
+        graph_2.add_vertex(VertexId(1));
+        graph_2.add_vertex(VertexId(2));
+
+        graph_2.add_edge(Edge(VertexId(0), VertexId(0)));
+        graph_2.add_edge(Edge(VertexId(0), VertexId(0)));
+        graph_2.add_edge(Edge(VertexId(0), VertexId(1)));
+        graph_2.add_edge(Edge(VertexId(0), VertexId(2)));
+        graph_2.add_edge(Edge(VertexId(0), VertexId(2)));
+        graph_2.add_edge(Edge(VertexId(0), VertexId(1)));
+
+        assert_ne!(graph_1, graph_2);
     }
 }

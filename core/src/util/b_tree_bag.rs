@@ -25,7 +25,7 @@ use std::collections::btree_map::BTreeMap;
 ///     println!("{}", i);
 /// }
 /// ```
-#[derive(Hash)]
+#[derive(Debug, Hash, PartialEq)]
 pub struct BTreeBag<T>
     where T: Ord {
     inner: BTreeMap<T, usize>

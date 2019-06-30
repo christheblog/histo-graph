@@ -1,5 +1,3 @@
-use serde_json;
-
 use histo_graph_core::graph::directed_graph::DirectedGraph;
 use histo_graph_core::graph::graph::{Edge, VertexId};
 use histo_graph_serde::directed_graph_serde::DirectedGraphSer;
