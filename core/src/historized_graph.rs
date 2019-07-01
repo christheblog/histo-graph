@@ -1,8 +1,8 @@
-use crate::core::graph::graph::*;
-use crate::core::graph::directed_graph::*;
-use crate::core::graph::command::*;
-use crate::core::history::hashlist::*;
-use crate::core::history::history::*;
+use crate::graph::graph::*;
+use crate::graph::directed_graph::*;
+use crate::graph::command::*;
+use crate::history::hashlist::*;
+use crate::history::history::*;
 
 type Commands = Vec<GraphCommand>;
 
@@ -72,7 +72,10 @@ impl HistorizedGraph {
         let Edge(v1, v2) = edge;
         match commit_command(self, GraphCommand::AddEdge(v1, v2)) {
             Err(_) => false,
-            Ok(_) => self.graph.add_edge(edge),
+            Ok(_) => {
+                self.graph.add_edge(edge);
+                true
+            },
         }
     }
     fn remove_edge(&mut self, edge: Edge) -> bool {

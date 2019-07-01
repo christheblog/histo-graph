@@ -1,7 +1,6 @@
-[package]
-name = "histo-graph"
-version = "0.1.0"
-authors = ["cacr <christheblog@gmail.com>"]
-edition = "2018"
-
-[dependencies]
+[workspace]
+members = [
+    "core",
+    "serde",
+    "main"
+]

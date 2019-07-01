@@ -1,6 +1,6 @@
-use crate::core::graph::graph::*;
-use crate::core::graph::directed_graph::DirectedGraph;
-use crate::core::graph::command::GraphCommand;
+use crate::graph::graph::*;
+use crate::graph::directed_graph::DirectedGraph;
+use crate::graph::command::GraphCommand;
 
 /// Diff between 2 graphs
 pub struct StructureDiff {
