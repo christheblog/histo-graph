@@ -1,0 +1,11 @@
+[package]
+name = "histo-graph-file"
+version = "0.1.0"
+authors = ["David Peklak <dpeklak@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+histo-graph-core = { path = "../core" }
+bincode = "1.1.4"
+ring = "0.14.6"
+data-encoding = "2.1.2"
