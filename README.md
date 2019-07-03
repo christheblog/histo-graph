@@ -31,3 +31,7 @@ Holds the core data-structures for commands and graphs.
 ### [histo-graph-serde](serde/)
 
 Implements serialization and deserialization of the core data-structures.
+
+### [histo-graph-file](file/)
+
+Implements a historized file-storage for graphs.
