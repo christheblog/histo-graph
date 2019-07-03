@@ -1,7 +1,11 @@
 use histo_graph_core::graph::graph::VertexId;
 
 use ring::digest::{Context, SHA256};
-use data_encoding::HEXUPPER;
+use data_encoding::HEXLOWER;
+
+use std::path::Path;
+use futures::future::Future;
+use tokio_fs::CreateDirFuture;
 
 struct File {
     content: Vec<u8>,
@@ -16,7 +20,7 @@ fn vertex_to_file(vertex_id: &VertexId) -> File {
     let mut context = Context::new(&SHA256);
     context.update(&content);
     let digest = context.finish();
-    let name = HEXUPPER.encode(digest.as_ref());
+    let name = HEXLOWER.encode(digest.as_ref());
 
     File {
         content,
@@ -24,19 +28,34 @@ fn vertex_to_file(vertex_id: &VertexId) -> File {
     }
 }
 
+fn create_dir() {
+    let path = Path::new("./foo");
+    let f = tokio_fs::create_dir(path);
+    let f = f.and_then(|dir| {
+        println!("created directory");
+        Ok(())
+    });
+    let f = f.map_err(|e| println!("Error"));
+
+    tokio::run(f);
+}
+
 #[cfg(test)]
 mod test {
     use histo_graph_core::graph::graph::VertexId;
     use super::File;
     use super::vertex_to_file;
-
-    use ring::digest::{Context, SHA256};
-    use data_encoding::HEXUPPER;
+    use super::create_dir;
 
     #[test]
     fn test_hash() {
         let File{content, name} = vertex_to_file(&VertexId(27));
 
-        assert_eq!(name, "4D159113222BFEB85FBE717CC2393EE8A6A85B7CE5AC1791C4EADE5E3DD6DE41")
+        assert_eq!(name, "4d159113222bfeb85fbe717cc2393ee8a6a85b7ce5ac1791c4eade5e3dd6de41")
+    }
+
+    #[test]
+    fn test_create_dir() {
+        create_dir();
     }
 }
