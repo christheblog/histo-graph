@@ -31,13 +31,23 @@ fn vertex_to_file(vertex_id: &VertexId) -> File {
 fn create_dir() {
     let path = Path::new("./foo");
     let f = tokio_fs::create_dir(path);
-    let f = f.and_then(|dir| {
+    let f = f.and_then(| _ | {
         println!("created directory");
         Ok(())
     });
-    let f = f.map_err(|e| println!("Error"));
+    let f = f.map_err(|_| eprintln!("Error"));
 
     tokio::run(f);
+}
+
+fn write_file(file: File) -> impl Future {
+    let path = Path::new("./foo");
+
+    tokio_fs::create_dir_all(path)
+        .and_then(move | _ | {
+            let path = path.join(&file.name);
+            tokio_fs::write(path, file.content)
+        })
 }
 
 #[cfg(test)]
@@ -46,6 +56,8 @@ mod test {
     use super::File;
     use super::vertex_to_file;
     use super::create_dir;
+    use super::write_file;
+    use futures::future::Future;
 
     #[test]
     fn test_hash() {
@@ -55,7 +67,13 @@ mod test {
     }
 
     #[test]
-    fn test_create_dir() {
-        create_dir();
+    fn test_write_vertex() {
+        let file = vertex_to_file(&VertexId(27));
+
+        let f = write_file(file)
+            .map(| _ | ())
+            .map_err(| _ | eprintln!("Error"));
+
+        tokio::run(f);
     }
 }
