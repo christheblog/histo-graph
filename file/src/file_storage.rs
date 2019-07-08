@@ -73,19 +73,24 @@ fn read_file_in_dir(dir_path: &Path, hash: Hash) -> impl Future<Item = File, Err
         })
 }
 
-fn write_all_vertices_to_files<I>(path: PathBuf, i: I) -> impl Future<Item=Vec<()>, Error = io::Error>
+fn write_all_vertices_to_files<I>(path: PathBuf, i: I) -> impl Future<Item=Vec<Hash>, Error = io::Error>
     where I: IntoIterator,
           <I as IntoIterator>::Item: Borrow<VertexId>
 {
     let futs = i
         .into_iter()
         .map(| v | vertex_to_file(v.borrow()))
-        .map(move | f | write_file_in_dir(path.as_ref(), f).map(| _ | () )) ;
+        .map(move | f | {
+            let hash = f.hash;
+            write_file_in_dir(path.as_ref(), f)
+                .map(move | _ | hash )
+        }
+        ) ;
 
     futures::future::join_all(futs)
 }
 
-fn store_graph_vertices(path: PathBuf, graph: &DirectedGraph) -> impl Future<Item=Vec<()>, Error = io::Error> {
+fn store_graph_vertices(path: PathBuf, graph: &DirectedGraph) -> impl Future<Item=Vec<Hash>, Error = io::Error> {
     let vertices: Vec<VertexId> = graph
         .vertices()
         .map(| v | *v)
