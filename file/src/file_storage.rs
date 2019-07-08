@@ -1,15 +1,20 @@
-use histo_graph_core::graph::graph::VertexId;
+use histo_graph_core::graph::{
+    graph::VertexId,
+    directed_graph::DirectedGraph,
+};
+
+use crate::error::{Error, Result};
 
 use ring::digest::{Context, SHA256};
 use data_encoding::HEXLOWER;
 
-use std::path::{Path, PathBuf};
 use futures::future::Future;
 use std::{
     borrow::Borrow,
-    io
+    io,
+    path::{Path, PathBuf},
 };
-use histo_graph_core::graph::directed_graph::DirectedGraph;
+
 
 #[derive(Clone, Copy)]
 pub struct Hash([u8; 32]);
@@ -49,7 +54,7 @@ fn vertex_to_file(vertex_id: &VertexId) -> File {
     }
 }
 
-fn file_to_vertex(file: &File) -> bincode::Result<VertexId> {
+fn file_to_vertex(file: &File) -> Result<VertexId> {
     let id: u64 = bincode::deserialize(file.content.as_ref())?;
     Ok(VertexId(id))
 }
@@ -101,6 +106,7 @@ mod test {
     use tokio::runtime::Runtime;
     use std::path::{Path, PathBuf};
     use histo_graph_core::graph::directed_graph::DirectedGraph;
+    use crate::error::{Error, Result};
     use crate::file_storage::{store_graph_vertices, write_file_in_dir, read_file_in_dir, file_to_vertex};
 
     #[test]
@@ -111,7 +117,7 @@ mod test {
     }
 
     #[test]
-    fn test_write_and_read_vertex() -> Result<(), std::io::Error> {
+    fn test_write_and_read_vertex() -> Result<()> {
         let vertex = VertexId(18);
 
         let file = vertex_to_file(&vertex);
@@ -125,7 +131,7 @@ mod test {
         let mut rt = Runtime::new()?;
         let file = rt.block_on(f)?;
 
-        let result = file_to_vertex(&file).unwrap();
+        let result = file_to_vertex(&file)?;
 
         assert_eq!(result, vertex);
 
@@ -133,7 +139,7 @@ mod test {
     }
 
     #[test]
-    fn test_write_vertices() -> Result<(), std::io::Error> {
+    fn test_write_vertices() -> Result<()> {
         let vertices = vec!{VertexId(1), VertexId(2), VertexId(3), VertexId(4)};
 
         let path: PathBuf = Path::new("../target/test/store/").into();
@@ -147,7 +153,7 @@ mod test {
     }
 
     #[test]
-    fn test_store_graph_vertices() -> Result<(), std::io::Error> {
+    fn test_store_graph_vertices() -> Result<()> {
         let mut graph = DirectedGraph::new();
         graph.add_vertex(VertexId(27));
         graph.add_vertex(VertexId(28));
