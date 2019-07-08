@@ -7,6 +7,7 @@ use crate::error::{Error, Result};
 
 use ring::digest::{Context, SHA256};
 use data_encoding::HEXLOWER;
+use serde::Serialize;
 
 use futures::future::Future;
 use std::{
@@ -16,7 +17,7 @@ use std::{
 };
 
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Serialize)]
 pub struct Hash([u8; 32]);
 
 impl Hash {
@@ -90,15 +91,33 @@ fn write_all_vertices_to_files<I>(path: PathBuf, i: I) -> impl Future<Item=Vec<H
     futures::future::join_all(futs)
 }
 
-fn store_graph_vertices(path: PathBuf, graph: &DirectedGraph) -> impl Future<Item=Vec<Hash>, Error = io::Error> {
+fn store_graph_vertices(path: PathBuf, graph: &DirectedGraph) -> impl Future<Item=(), Error = io::Error> {
     let vertices: Vec<VertexId> = graph
         .vertices()
         .map(| v | *v)
         .collect();
 
-    tokio_fs::create_dir_all(path.clone()).and_then(move | _ | {
-        write_all_vertices_to_files(path, vertices)
-    })
+    tokio_fs::create_dir_all(path.clone())
+        .and_then({ let path = path.clone(); move | _ | {
+            write_all_vertices_to_files(path, vertices)
+        }})
+        .and_then(move | hash_vec | {
+            let file = hash_vec_to_file(&hash_vec);
+            let path = path.join("vertices");
+            tokio_fs::write(path, file.content)
+                .map( | _ | () )
+        })
+}
+
+fn hash_vec_to_file(hash_vec: &Vec<Hash>) -> File {
+    // serialize the vertex_id
+    let content: Vec<u8> = bincode::serialize(&hash_vec).unwrap();
+    let hash: Hash = (&content).into();
+
+    File {
+        content,
+        hash,
+    }
 }
 
 #[cfg(test)]

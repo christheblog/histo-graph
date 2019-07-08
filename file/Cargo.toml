@@ -10,5 +10,8 @@ bincode = "1.1.4"
 ring = "0.14.6"
 data-encoding = "2.1.2"
 tokio-fs = "0.1.6"
-tokio = "0.1.21"
 futures = "0.1.28"
+serde = { version = "1.0.92", features = ["derive"] }
+
+[dev-dependencies]
+tokio = "0.1.21"
