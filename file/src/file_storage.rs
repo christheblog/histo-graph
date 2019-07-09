@@ -74,24 +74,51 @@ fn read_file_in_dir(dir_path: &Path, hash: Hash) -> impl Future<Item = File, Err
         })
 }
 
-fn write_all_vertices_to_files<I>(path: PathBuf, i: I) -> impl Future<Item=Vec<Hash>, Error = io::Error>
+/// Writes vertices to files.
+///
+/// First creates a sub-directory `vertex/` in the provided `base_path`, then writes the vertices
+/// into this sub-directory, creating one file for each vertex.
+/// Returns a vector of the hashes of the written files.
+fn write_all_vertices_to_files<I>(base_path: PathBuf, i: I) -> impl Future<Item=Vec<Hash>, Error = io::Error>
     where I: IntoIterator,
           <I as IntoIterator>::Item: Borrow<VertexId>
 {
+    let path = base_path.join("vertex");
     let futs = i
         .into_iter()
         .map(| v | vertex_to_file(v.borrow()))
-        .map(move | f | {
-            let hash = f.hash;
-            write_file_in_dir(path.as_ref(), f)
-                .map(move | _ | hash )
-        }
-        ) ;
+        .map({
+            let path = path.clone();
+            move |f| {
+                let hash = f.hash;
+                write_file_in_dir(path.as_ref(), f)
+                    .map(move |_| hash)
+            }
+        });
 
-    futures::future::join_all(futs)
+    tokio_fs::create_dir_all(path)
+        .and_then(| _ | futures::future::join_all(futs))
 }
 
-fn store_graph_vertices(path: PathBuf, graph: &DirectedGraph) -> impl Future<Item=(), Error = io::Error> {
+/// Writes the vector of hashes of the vertices of a graph to a file.
+///
+/// First creates a sub-directoy `vertexvec/` in the provided `base_path`, then writes the vector
+/// of hashes into a single file in that sub-directory.
+/// Returns a hash of the written file.
+fn write_vertex_hash_vec_file(base_path: PathBuf, hash_vec: Vec<Hash>) -> impl Future<Item = Hash, Error = io::Error> {
+    let path = base_path.join("vertexvec");
+    let file = hash_vec_to_file(&hash_vec);
+    let hash = file.hash;
+
+    tokio_fs::create_dir_all(path.clone())
+        .and_then(move | _ | write_file_in_dir(&path, file))
+        .map( move | _ | hash)
+}
+
+/// Stores the vertices of a graph. Returns Future of the hash of the vertex vector file.
+///
+///
+fn store_graph_vertices(path: PathBuf, graph: &DirectedGraph) -> impl Future<Item = Hash, Error = io::Error> {
     let vertices: Vec<VertexId> = graph
         .vertices()
         .map(| v | *v)
@@ -101,12 +128,9 @@ fn store_graph_vertices(path: PathBuf, graph: &DirectedGraph) -> impl Future<Ite
         .and_then({ let path = path.clone(); move | _ | {
             write_all_vertices_to_files(path, vertices)
         }})
-        .and_then(move | hash_vec | {
-            let file = hash_vec_to_file(&hash_vec);
-            let path = path.join("vertices");
-            tokio_fs::write(path, file.content)
-                .map( | _ | () )
-        })
+        .and_then(move | hash_vec |
+            write_vertex_hash_vec_file(path, hash_vec)
+        )
 }
 
 fn hash_vec_to_file(hash_vec: &Vec<Hash>) -> File {
