@@ -122,10 +122,10 @@ fn write_vertex_hash_vec_file(base_path: PathBuf, hash_vec: Vec<Hash>) -> impl F
         .map( move | _ | hash)
 }
 
-/// Stores the vertices of a graph. Returns Future of the hash of the vertex vector file.
+/// Writes the vertices of a graph. Returns Future of the hash of the vertex vector file.
 ///
 ///
-fn store_graph_vertices(base_path: PathBuf, graph: &DirectedGraph) -> impl Future<Item = Hash, Error = io::Error> {
+fn write_graph_vertices(base_path: PathBuf, graph: &DirectedGraph) -> impl Future<Item = Hash, Error = io::Error> {
     let vertices: Vec<VertexId> = graph
         .vertices()
         .map(| v | *v)
@@ -163,6 +163,10 @@ fn read_vertex_hash_vec(base_path: PathBuf, hash: Hash) -> impl Future<Item = Ve
         .and_then(|file| file_to_hash_vec(&file) )
 }
 
+/// Reads vertices from files.
+///
+/// Reads from files placed in the sub-directory `vertex/` of the provided base_path.
+/// Where the filenames are given by the provided hash_vec.
 fn read_all_vertices_from_files(base_path: PathBuf, hash_vec: Vec<Hash>) -> impl Future<Item = Vec<VertexId>, Error = Error> {
     let path = base_path.join("vertex");
 
@@ -177,18 +181,30 @@ fn read_all_vertices_from_files(base_path: PathBuf, hash_vec: Vec<Hash>) -> impl
     futures::future::join_all(futs)
 }
 
+/// Reads vertices and adds them to the provided graph.
+///
+/// Note that this function consumes the graph, and returns it back in the returned Future, with
+/// the vertices added.
+fn read_graph_vertices(base_path: PathBuf, hash: Hash, mut graph: DirectedGraph) -> impl Future<Item=DirectedGraph, Error=Error> {
+    read_vertex_hash_vec(base_path.clone(), hash)
+        .and_then(move |hash_vec| read_all_vertices_from_files(base_path, hash_vec))
+        .and_then(|vertices| {
+            for v in vertices {
+                graph.add_vertex(v);
+            }
+            Ok(graph)
+        })
+}
+
 #[cfg(test)]
 mod test {
     use histo_graph_core::graph::graph::VertexId;
-    use super::{File,
-                vertex_to_file,
-                write_all_vertices_to_files};
+    use super::*;
     use futures::future::Future;
     use tokio::runtime::Runtime;
     use std::path::{Path, PathBuf};
     use histo_graph_core::graph::directed_graph::DirectedGraph;
     use crate::error::{Error, Result};
-    use crate::file_storage::{store_graph_vertices, write_file_in_dir, read_file_in_dir, file_to_vertex, read_vertex_hash_vec, read_all_vertices_from_files};
 
     #[test]
     fn test_hash() {
@@ -234,7 +250,7 @@ mod test {
     }
 
     #[test]
-    fn test_store_graph_vertices() -> Result<()> {
+    fn test_write_and_read_graph_vertices() -> Result<()> {
         let mut graph = DirectedGraph::new();
         graph.add_vertex(VertexId(27));
         graph.add_vertex(VertexId(28));
@@ -242,18 +258,15 @@ mod test {
 
         let path: PathBuf = Path::new("../target/test/store/").into();
 
-        let f = store_graph_vertices(path.clone(), &graph)
+        let f = write_graph_vertices(path.clone(), &graph)
             .map_err(Into::into)
-            .and_then({ let path = path.clone(); move |hash| read_vertex_hash_vec(path, hash)})
-            .and_then(move |hash_vec| read_all_vertices_from_files(path, hash_vec));
+            .and_then(|hash|{
+                let mut result_graph = DirectedGraph::new();
+                read_graph_vertices(path, hash, result_graph)
+            });
 
         let mut rt = Runtime::new()?;
-        let vertices = rt.block_on(f)?;
-
-        let mut result_graph = DirectedGraph::new();
-        for v in vertices {
-            result_graph.add_vertex(v);
-        }
+        let result_graph = rt.block_on(f)?;
 
         assert_eq!(graph, result_graph);
 
