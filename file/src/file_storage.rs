@@ -296,7 +296,7 @@ fn read_hash_edge(dir_path: PathBuf, hash: Hash) -> impl Future<Item = HashEdge,
         .and_then(|file| file_to_hash_edge(&file))
 }
 
-fn read_edge(base_path: PathBuf, hash: Hash) -> impl Future<Item = Edge, Error = Error> {
+fn read_edge(base_path: &PathBuf, hash: Hash) -> impl Future<Item = Edge, Error = Error> {
     let edge_path = base_path.join("edge");
     let vertex_path = base_path.join("vertex");
 
@@ -314,6 +314,49 @@ fn read_edge(base_path: PathBuf, hash: Hash) -> impl Future<Item = Edge, Error =
         })
 }
 
+/// Reads an edge hash vector file.
+///
+/// Reads from a file placed in the sub-directory `edgevec/` of the provided base_path, with the
+/// provided `hash` as a filename.
+/// Returns a hash vector.
+fn read_edge_hash_vec(base_path: PathBuf, hash: Hash) -> impl Future<Item = Vec<Hash>, Error = Error> {
+    let path = base_path
+        .join("edgevec");
+
+    read_file_in_dir(&path, hash)
+        .map_err(Into::into)
+        .and_then(|file| file_to_hash_vec(&file) )
+}
+
+/// Reads edge from files.
+///
+/// Reads edge from files placed in the sub-directory `edge/` of the provided base_path.
+/// Where the filenames are given by the provided hash_vec.
+/// Also reades the vertices connected to the edges from a subdirectory `vertex/` of the provided
+/// base_path.
+fn read_all_edges_from_files(base_path: PathBuf, hash_vec: Vec<Hash>) -> impl Future<Item = Vec<Edge>, Error = Error> {
+    let futs = hash_vec
+        .into_iter()
+        .map(move |hash| read_edge(&base_path, hash));
+
+    futures::future::join_all(futs)
+}
+
+/// Reads edges and adds them to the provided graph.
+///
+/// Note that this function consumes the graph, and returns it back in the returned Future, with
+/// the edges added.
+fn read_graph_edges(base_path: PathBuf, hash: Hash, mut graph: DirectedGraph) -> impl Future<Item=DirectedGraph, Error=Error> {
+    read_edge_hash_vec(base_path.clone(), hash)
+        .and_then(move |hash_vec| read_all_edges_from_files(base_path, hash_vec))
+        .and_then(|edges| {
+            for e in edges {
+                graph.add_edge(e);
+            }
+            Ok(graph)
+        })
+}
+
 #[cfg(test)]
 mod test {
     use histo_graph_core::graph::graph::VertexId;
@@ -322,7 +365,7 @@ mod test {
     use tokio::runtime::Runtime;
     use std::path::{Path, PathBuf};
     use histo_graph_core::graph::directed_graph::DirectedGraph;
-    use crate::error::{Error, Result};
+    use crate::error::Result;
 
     #[test]
     fn test_hash() {
@@ -379,7 +422,7 @@ mod test {
         let f = write_graph_vertices(path.clone(), &graph)
             .map_err(Into::into)
             .and_then(|hash|{
-                let mut result_graph = DirectedGraph::new();
+                let result_graph = DirectedGraph::new();
                 read_graph_vertices(path, hash, result_graph)
             });
 
@@ -403,7 +446,7 @@ mod test {
             .and_then({ let edge_path = edge_path.clone(); move | _ | tokio_fs::create_dir_all(edge_path)})
             .and_then(move | _ | write_edge_to_file(edge_path, &edge))
             .map_err(Into::into)
-            .and_then(move |hash| read_edge(path, hash));
+            .and_then(move |hash| read_edge(&path, hash));
 
         let mut rt = Runtime::new()?;
         let result_edge = rt.block_on(f)?;
@@ -430,5 +473,31 @@ mod test {
         let mut rt = Runtime::new()?;
         rt.block_on(f)
             .map_err(Into::into)
+    }
+
+    #[test]
+    fn test_write_and_read_graph() -> Result<()> {
+        let mut graph = DirectedGraph::new();
+        graph.add_vertex(VertexId(27));
+        graph.add_edge(Edge(VertexId(28), VertexId(29)));
+        graph.add_edge(Edge(VertexId(28), VertexId(30)));
+
+        let path: PathBuf = Path::new("../target/test/store/").into();
+
+        let f = write_graph_vertices(path.clone(), &graph)
+            .join(write_graph_edges(path.clone(), &graph))
+            .map_err(Into::into)
+            .and_then(|(vertex_hash, edge_hash)| {
+                let result_graph = DirectedGraph::new();
+                read_graph_vertices(path.clone(), vertex_hash, result_graph)
+                    .and_then(move |result_graph| read_graph_edges(path, edge_hash, result_graph))
+            });
+
+        let mut rt = Runtime::new()?;
+        let result_graph = rt.block_on(f)?;
+
+        assert_eq!(graph, result_graph);
+
+        Ok(())
     }
 }
