@@ -46,9 +46,15 @@ struct File {
 
 /// A HashEdge respresents an edge by the hashes of the vertices it is connected to.
 #[derive(Serialize, Deserialize)]
-struct HashEdge{
+struct HashEdge {
     from: Hash,
     to: Hash,
+}
+
+/// The root of a stored graph. It holds the hashes of the vertex vector and the edge vector.
+pub struct GraphHash {
+    vertex_vec_hash: Hash,
+    edge_vec_hash: Hash,
 }
 
 fn vertex_to_file(vertex_id: &VertexId) -> File {
@@ -168,6 +174,7 @@ fn write_graph_vertices(base_path: PathBuf, graph: &DirectedGraph) -> impl Futur
 
 /// Writes an edge to a file in the directory specified by `dir_path`.
 /// Returns the hash of the file.
+#[cfg(test)]
 fn write_edge_to_file(dir_path: PathBuf, edge: &Edge) -> impl Future<Item = Hash, Error = io::Error> {
     let file = edge_to_file(edge);
     let hash = file.hash;
@@ -231,6 +238,16 @@ fn write_graph_edges(base_path: PathBuf, graph: &DirectedGraph) -> impl Future<I
         .and_then(move | hash_vec |
             write_edge_hash_vec_file(base_path, hash_vec)
         )
+}
+
+/// Writes the vertices and edges of a graph.
+/// Returns a `GraphHash`.
+pub fn write_graph(base_path: PathBuf, graph: &DirectedGraph) -> impl Future<Item = GraphHash, Error = io::Error> {
+    let vertex_fut = write_graph_vertices(base_path.clone(), graph);
+    let edge_fut = write_graph_edges(base_path, graph);
+
+    vertex_fut.join(edge_fut)
+        .map(|(vertex_vec_hash, edge_vec_hash)| GraphHash{vertex_vec_hash, edge_vec_hash})
 }
 
 
@@ -355,6 +372,14 @@ fn read_graph_edges(base_path: PathBuf, hash: Hash, mut graph: DirectedGraph) ->
             }
             Ok(graph)
         })
+}
+
+/// Reads the vertices and edges of a graph, specified by the provided graph_hash.
+pub fn read_graph(base_path: PathBuf, graph_hash: GraphHash) -> impl Future<Item = DirectedGraph, Error = Error> {
+    let graph = DirectedGraph::new();
+
+    read_graph_vertices(base_path.clone(), graph_hash.vertex_vec_hash, graph)
+        .and_then(move |graph| read_graph_edges(base_path, graph_hash.edge_vec_hash, graph))
 }
 
 #[cfg(test)]
@@ -484,14 +509,9 @@ mod test {
 
         let path: PathBuf = Path::new("../target/test/store/").into();
 
-        let f = write_graph_vertices(path.clone(), &graph)
-            .join(write_graph_edges(path.clone(), &graph))
+        let f = write_graph(path.clone(), &graph)
             .map_err(Into::into)
-            .and_then(|(vertex_hash, edge_hash)| {
-                let result_graph = DirectedGraph::new();
-                read_graph_vertices(path.clone(), vertex_hash, result_graph)
-                    .and_then(move |result_graph| read_graph_edges(path, edge_hash, result_graph))
-            });
+            .and_then(|graph_hash| read_graph(path, graph_hash));
 
         let mut rt = Runtime::new()?;
         let result_graph = rt.block_on(f)?;
