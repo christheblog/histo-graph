@@ -15,6 +15,7 @@ use std::{
     io,
     path::{Path, PathBuf},
 };
+use std::ffi::OsStr;
 
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
@@ -52,6 +53,7 @@ struct HashEdge {
 }
 
 /// The root of a stored graph. It holds the hashes of the vertex vector and the edge vector.
+#[derive(Serialize, Deserialize)]
 pub struct GraphHash {
     vertex_vec_hash: Hash,
     edge_vec_hash: Hash,
@@ -250,6 +252,29 @@ pub fn write_graph(base_path: PathBuf, graph: &DirectedGraph) -> impl Future<Ite
         .map(|(vertex_vec_hash, edge_vec_hash)| GraphHash{vertex_vec_hash, edge_vec_hash})
 }
 
+/// Saves a graph under the given name.
+///
+/// Creates a subdirectory `graph/` of the provided base_path, then saves the serialized GraphHash
+/// of the provided graph in that directory.
+/// Returns the path to the written file.
+pub fn save_graph_as(base_path: PathBuf, name: &OsStr, graph: &DirectedGraph) -> impl Future<Item=PathBuf, Error=Error> {
+    let dir = base_path.join("graph");
+    let path = dir.join(name);
+    write_graph(base_path, graph)
+        .map_err(Into::<Error>::into)
+        .and_then(move |graph_hash| tokio_fs::create_dir_all(dir)
+            .map_err(Into::<Error>::into)
+            .and_then(move | _ | bincode::serialize(&graph_hash)
+                .map_err(Into::<Error>::into))
+        )
+        .and_then({
+            let path = path.clone();
+            move |content| tokio_fs::write(path, content)
+                .map_err(Into::<Error>::into)
+        })
+        .map(|_| path)
+}
+
 
 fn read_file_in_dir(dir_path: &Path, hash: Hash) -> impl Future<Item = File, Error = io::Error> {
     let path = dir_path.join(hash.to_string());
@@ -382,6 +407,15 @@ pub fn read_graph(base_path: PathBuf, graph_hash: GraphHash) -> impl Future<Item
         .and_then(move |graph| read_graph_edges(base_path, graph_hash.edge_vec_hash, graph))
 }
 
+pub fn load_graph(base_dir: PathBuf, name: &OsStr) -> impl Future<Item = DirectedGraph, Error = Error> {
+    let path = base_dir.join("graph").join(name);
+    tokio_fs::read(path)
+        .map_err(Into::<Error>::into)
+        .and_then(|content| bincode::deserialize::<GraphHash>(&content)
+            .map_err(Into::<Error>::into))
+        .and_then(|graph_hash| read_graph(base_dir, graph_hash))
+}
+
 #[cfg(test)]
 mod test {
     use histo_graph_core::graph::graph::VertexId;
@@ -389,6 +423,7 @@ mod test {
     use futures::future::Future;
     use tokio::runtime::Runtime;
     use std::path::{Path, PathBuf};
+    use std::ffi::OsString;
     use histo_graph_core::graph::directed_graph::DirectedGraph;
     use crate::error::Result;
 
@@ -512,6 +547,26 @@ mod test {
         let f = write_graph(path.clone(), &graph)
             .map_err(Into::into)
             .and_then(|graph_hash| read_graph(path, graph_hash));
+
+        let mut rt = Runtime::new()?;
+        let result_graph = rt.block_on(f)?;
+
+        assert_eq!(graph, result_graph);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_read_and_write_named_graph() -> Result<()> {
+        let mut graph = DirectedGraph::new();
+        graph.add_vertex(VertexId(27));
+        graph.add_edge(Edge(VertexId(28), VertexId(29)));
+        graph.add_edge(Edge(VertexId(28), VertexId(30)));
+
+        let path: PathBuf = Path::new("../target/test/store/").into();
+
+        let f = save_graph_as(path.clone(), &OsString::from("laurengraph"), &graph)
+            .and_then(move | _ | load_graph(path, &OsString::from("laurengraph")));
 
         let mut rt = Runtime::new()?;
         let result_graph = rt.block_on(f)?;

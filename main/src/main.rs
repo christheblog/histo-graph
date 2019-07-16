@@ -1,18 +1,15 @@
-use histo_graph_core::graph::directed_graph::DirectedGraph;
-use histo_graph_core::graph::graph::{Edge, VertexId};
-use histo_graph_serde::directed_graph_serde::DirectedGraphSer;
+use clap::{App, SubCommand};
 
-fn main() -> Result<(), serde_json::error::Error>{
-    let mut graph = DirectedGraph::new();
-    graph.add_edge(Edge(VertexId(0), VertexId(1)));
-    graph.add_edge(Edge(VertexId(0), VertexId(2)));
-    graph.add_edge(Edge(VertexId(0), VertexId(0)));
+fn main() {
+    let matches = App::new("histo-graph")
+        .version("0.1.0")
+        .about("Historizes graphs")
+        .subcommand(SubCommand::with_name("show")
+            .about("shows a graph")
+            )
+        .get_matches();
 
-    let ser: DirectedGraphSer = (&graph).into();
-
-    let str = serde_json::to_string(&ser)?;
-
-    println!("{}", str);
-
-    Ok(())
+    if let Some(matches) = matches.subcommand_matches("show") {
+        println!("Show the graph");
+    }
 }
