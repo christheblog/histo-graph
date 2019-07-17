@@ -6,7 +6,7 @@ use std::ffi::OsString;
 use tokio::runtime::Runtime;
 use error::Result;
 use histo_graph_core::graph::directed_graph::DirectedGraph;
-use histo_graph_core::graph::graph::VertexId;
+use histo_graph_core::graph::graph::{VertexId, Edge};
 use futures::future::Future;
 
 mod error;
@@ -26,9 +26,18 @@ fn main() -> Result<()> {
                 .required(true)
                 .index(1))
         )
+        .subcommand(SubCommand::with_name("add-edge")
+            .about("adds an edge")
+            .arg(Arg::with_name("vertexId_from")
+                .required(true)
+                .index(1))
+            .arg(Arg::with_name("vertexId_to")
+                .required(true)
+                .index(2))
+        )
         .get_matches();
 
-    let base_dir: PathBuf = Path::new("../target/test/store/").into();
+    let base_dir: PathBuf = Path::new("target/test/store/").into();
     let name = &OsString::from("current");
 
     if let Some(_) = matches.subcommand_matches("show") {
@@ -69,6 +78,30 @@ fn main() -> Result<()> {
             let f = load_graph(base_dir.clone(), &name)
                 .and_then(move |mut graph| {
                     graph.add_vertex(vertex_id);
+                    Ok(graph)
+                })
+                .and_then({ let name = name.clone(); move |graph| save_graph_as(base_dir, &name, &graph)});
+
+            let mut rt = Runtime::new()?;
+            rt.block_on(f)?;
+        }
+
+        return Ok(());
+    }
+
+    if let Some(matches) = matches.subcommand_matches("add-edge") {
+        println!("Running sub-command 'add-edge' ");
+        if let (Some(vertex_id_from), Some(vertex_id_to)) = (matches.value_of("vertexId_from"), matches.value_of("vertexId_to")) {
+            println!("A vertexId_from was passed in: {}, a vertexId_to was passed in: {}", vertex_id_from, vertex_id_to);
+
+            let vertex_id_from: u64 = std::str::FromStr::from_str(vertex_id_from)?;
+            let vertex_id_to: u64 = std::str::FromStr::from_str(vertex_id_to)?;
+
+            let edge = Edge(VertexId(vertex_id_from),  VertexId(vertex_id_to));
+
+            let f = load_graph(base_dir.clone(), &name)
+                .and_then(move |mut graph| {
+                    graph.add_edge(edge);
                     Ok(graph)
                 })
                 .and_then({ let name = name.clone(); move |graph| save_graph_as(base_dir, &name, &graph)});
