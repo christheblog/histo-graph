@@ -1,27 +1,85 @@
-use clap::{App, SubCommand};
-use histo_graph_file::file_storage::load_graph;
+use clap::{App, SubCommand, Arg};
+use histo_graph_file::file_storage::*;
 use std::path::{PathBuf, Path};
 use histo_graph_serde::directed_graph_serde::DirectedGraphSer;
 use std::ffi::OsString;
 use tokio::runtime::Runtime;
+use error::Result;
+use histo_graph_core::graph::directed_graph::DirectedGraph;
+use histo_graph_core::graph::graph::VertexId;
+use futures::future::Future;
 
-fn main() {
+mod error;
+
+fn main() -> Result<()> {
     let matches = App::new("histo-graph")
         .version("0.1.0")
         .about("Historizes graphs")
+        .subcommand(SubCommand::with_name("init")
+            .about("initializes a new graph"))
         .subcommand(SubCommand::with_name("show")
             .about("shows a graph")
             )
+        .subcommand(SubCommand::with_name("add-vertex")
+            .about("adds a vertex")
+            .arg(Arg::with_name("vertexId")
+                .required(true)
+                .index(1))
+        )
         .get_matches();
 
-    if let Some(matches) = matches.subcommand_matches("show") {
-        let base_dir: PathBuf = Path::new("../target/test/store/").into();
-        let f = load_graph(base_dir, &OsString::from("laurengraph"));
+    let base_dir: PathBuf = Path::new("../target/test/store/").into();
+    let name = &OsString::from("current");
 
-        let mut rt = Runtime::new().unwrap();
-        let graph = rt.block_on(f).unwrap();
+    if let Some(_) = matches.subcommand_matches("show") {
+        println!("Running sub-command 'show' ");
+
+        let f = load_graph(base_dir, &name);
+
+        let mut rt = Runtime::new()?;
+        let graph = rt.block_on(f)?;
         let ser: DirectedGraphSer = (&graph).into();
-        let str = serde_json::to_string(&ser).unwrap();
+        let str = serde_json::to_string(&ser)?;
         println!("{}", str);
+
+        return Ok(());
     }
+
+    if let Some(_) = matches.subcommand_matches("init") {
+        println!("Running sub-command 'init' ");
+
+        let graph = DirectedGraph::new();
+
+        let f = save_graph_as(base_dir, &name, &graph);
+
+        let mut rt = Runtime::new()?;
+        rt.block_on(f)?;
+
+        return Ok(());
+    }
+
+    if let Some(matches) = matches.subcommand_matches("add-vertex") {
+        println!("Running sub-command 'add-vertex' ");
+        if let Some(vertex_id) = matches.value_of("vertexId") {
+            println!("A vertexId was passed in: {}", vertex_id);
+
+            let vertex_id: u64 = std::str::FromStr::from_str(vertex_id)?;
+            let vertex_id = VertexId(vertex_id);
+
+            let f = load_graph(base_dir.clone(), &name)
+                .and_then(move |mut graph| {
+                    graph.add_vertex(vertex_id);
+                    Ok(graph)
+                })
+                .and_then({ let name = name.clone(); move |graph| save_graph_as(base_dir, &name, &graph)});
+
+            let mut rt = Runtime::new()?;
+            rt.block_on(f)?;
+        }
+
+        return Ok(());
+    }
+
+    Ok(())
+
 }
