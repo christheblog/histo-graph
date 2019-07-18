@@ -37,7 +37,7 @@ fn main() -> Result<()> {
         )
         .get_matches();
 
-    let base_dir: PathBuf = Path::new("target/test/store/").into();
+    let base_dir: PathBuf = Path::new(".store/").into();
     let name = &OsString::from("current");
 
     if let Some(_) = matches.subcommand_matches("show") {

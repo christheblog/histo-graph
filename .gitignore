@@ -3,3 +3,4 @@
 Cargo.lock
 .idea
 histo-graph.iml
+/.store
