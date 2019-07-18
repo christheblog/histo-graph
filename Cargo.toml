@@ -3,5 +3,5 @@ members = [
     "core",
     "serde",
     "file",
-    "main"
+    "refajo"
 ]
