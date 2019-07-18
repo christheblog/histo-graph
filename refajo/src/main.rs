@@ -70,7 +70,7 @@ fn main() -> Result<()> {
     if let Some(matches) = matches.subcommand_matches("add-vertex") {
         println!("Running sub-command 'add-vertex' ");
         if let Some(vertex_id) = matches.value_of("vertexId") {
-            println!("A vertexId was passed in: {}", vertex_id);
+            println!("Adding vertex '{}'", vertex_id);
 
             let vertex_id: u64 = std::str::FromStr::from_str(vertex_id)?;
             let vertex_id = VertexId(vertex_id);
@@ -92,7 +92,7 @@ fn main() -> Result<()> {
     if let Some(matches) = matches.subcommand_matches("add-edge") {
         println!("Running sub-command 'add-edge' ");
         if let (Some(vertex_id_from), Some(vertex_id_to)) = (matches.value_of("vertexId_from"), matches.value_of("vertexId_to")) {
-            println!("A vertexId_from was passed in: {}, a vertexId_to was passed in: {}", vertex_id_from, vertex_id_to);
+            println!("Adding edge '{}' -> '{}'", vertex_id_from, vertex_id_to);
 
             let vertex_id_from: u64 = std::str::FromStr::from_str(vertex_id_from)?;
             let vertex_id_to: u64 = std::str::FromStr::from_str(vertex_id_to)?;
